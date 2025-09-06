@@ -86,6 +86,8 @@ jobs:
         func --version
     - name: Test
       working-directory: NotificationSystem/NotificationSystemTests
+      env:
+        OrcaNotificationStorageSettingValue: ${{ secrets.ORCA_NOTIFICATION_STORAGE }}
       run: dotnet test
   deploy:
     if: github.ref == 'refs/heads/main'

@@ -1,0 +1,13 @@
+{
+    "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "OrcaNotificationStorageSetting": "<OrcaNotificationStorageSettingValue>",
+    "aifororcasmetadatastore_DOCUMENTDB": "AccountEndpoint=https://localhost:8081/;AccountKey=C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==",
+    "SenderEmail": "info@example.com",
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet",
+    "FUNCTIONS_INPROC_NET8_ENABLED": "1",
+    "ORCASITE_APIKEY": "orcasound_cdBdRHB77qUU5OmwXyfGwfZwr7lWYp9C9cUfmZjKgqFzrvNDp2kCusPlsJlbIHiFT_bZWE77",
+    "ORCASITE_HOSTNAME": "beta.orcasound.net"
+  }
+}

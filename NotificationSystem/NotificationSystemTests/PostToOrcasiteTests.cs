@@ -120,18 +120,32 @@ public class PostToOrcasiteTests
             accountEndpoint: "https://localhost:8081/",
             authKeyOrResourceToken: "C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==");
 
-        Microsoft.Azure.Cosmos.Database database = await client.CreateDatabaseIfNotExistsAsync(
+        // Create database if needed.
+        DatabaseResponse? databaseResponse = await client.CreateDatabaseIfNotExistsAsync(
             id: "predictions",
-             throughput: 400);
+            throughput: 400);
+        int httpStatusCode = (int)databaseResponse.StatusCode;
+        _output.WriteLine($"CreateDatabaseIfNotExistsAsync returned status: {httpStatusCode}");
+        Assert.True(httpStatusCode >= 200 && httpStatusCode < 300, $"CreateDatabaseIfNotExistsAsync failed with status {httpStatusCode}");
+        Microsoft.Azure.Cosmos.Database database = databaseResponse.Database;
 
-        Container metadataContainer = await database.CreateContainerIfNotExistsAsync(
+        // Create metadata container if needed.
+        ContainerResponse containerResponse = await database.CreateContainerIfNotExistsAsync(
             id: "metadata",
-            partitionKeyPath: "/source_guid"
-        );
+            partitionKeyPath: "/source_guid");
+        httpStatusCode = (int)containerResponse.StatusCode;
+        _output.WriteLine($"CreateContainerIfNotExistsAsync returned status: {httpStatusCode}");
+        Assert.True(httpStatusCode >= 200 && httpStatusCode < 300, $"CreateContainerIfNotExistsAsync failed with status {httpStatusCode}");
+        Container metadataContainer = containerResponse.Container;
 
-        Container leasesContainer = await database.CreateContainerIfNotExistsAsync(
+        // Create leases container if needed.
+        containerResponse = await database.CreateContainerIfNotExistsAsync(
             id: "leases",
             partitionKeyPath: "/id");
+        httpStatusCode = (int)containerResponse.StatusCode;
+        _output.WriteLine($"CreateContainerIfNotExistsAsync returned status: {httpStatusCode}");
+        Assert.True(httpStatusCode >= 200 && httpStatusCode < 300, $"CreateContainerIfNotExistsAsync failed with status {httpStatusCode}");
+        Container leasesContainer = containerResponse.Container;
 
         // Start Azure function process from the function host directory.
         string workingDirectory = FunctionHostDirectory;
@@ -150,14 +164,17 @@ public class PostToOrcasiteTests
             }
         };
 
-#if false
-        // Ensure the function host receives required env vars.
-        if (!string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("ORCASITE_APIKEY")))
+        // Make sure the working directory has settings.
+        string destinationPath = Path.Combine(workingDirectory, "local.settings.json");
+        if (!File.Exists(destinationPath))
         {
-            process.StartInfo.Environment["ORCASITE_APIKEY"] = Environment.GetEnvironmentVariable("ORCASITE_APIKEY")!;
+            string sourcePath = Path.Combine(_solutionDirectory, "NotificationSystemTests", "TestData", "NotificationSystem.settings.json");
+            string rawJson = File.ReadAllText(sourcePath);
+            string actualConnectionString = Environment.GetEnvironmentVariable("OrcaNotificationStorageSettingValue")!;
+            string transformedJson = rawJson.Replace("<OrcaNotificationStorageSettingValue>", actualConnectionString);
+            File.WriteAllText(destinationPath, transformedJson);
+            _output.WriteLine($"Created {destinationPath}");
         }
-        process.StartInfo.Environment["ORCASITE_HOSTNAME"] = Environment.GetEnvironmentVariable("ORCASITE_HOSTNAME") ?? "beta.orcasound.net";
-#endif
 
         int outputStarted = 0;
         int postsAttempted = 0;
@@ -213,8 +230,8 @@ public class PostToOrcasiteTests
             item.whaleFoundConfidence = random.NextDouble() * 30 + 50;
 
             dynamic? result = await metadataContainer.UpsertItemAsync(item);
-            int httpStatusCode = (int)result.StatusCode;
-            _output.WriteLine($"Cosmos DB Emulator returned status: {httpStatusCode}");
+            httpStatusCode = (int)result.StatusCode;
+            _output.WriteLine($"UpsertItemAsync returned status: {httpStatusCode}");
             Assert.True(httpStatusCode >= 200 && httpStatusCode < 300, $"Cosmos DB update failed with status {httpStatusCode}");
 
             // Wait up to 30 seconds for the Azure function to execute.
