@@ -8,16 +8,19 @@ using NotificationSystem.Models;
 using RichardSzalay.MockHttp;
 using System.Diagnostics;
 using System.Net;
+using Xunit.Abstractions;
 
 public class PostToOrcasiteTests
 {
+    private readonly ITestOutputHelper _output;
     private string _solutionDirectory;
     private string _sampleOrcaHelloDetection;
     private string _sampleOrcasiteFeeds;
     private string _sampleOrcasitePostDetectionResponse;
 
-    public PostToOrcasiteTests()
+    public PostToOrcasiteTests(ITestOutputHelper output)
     {
+        _output = output;
         _solutionDirectory = FindSolutionDirectory() ?? throw new Exception("Could not find solution directory");
         _sampleOrcaHelloDetection = GetStringFromFile("OrcaHelloDetection.json");
         _sampleOrcasiteFeeds = GetStringFromFile("OrcasiteFeeds.json");
@@ -132,7 +135,7 @@ public class PostToOrcasiteTests
 
         // Start Azure function process from the function host directory.
         string workingDirectory = FunctionHostDirectory;
-        Console.WriteLine($"Function host working directory: {workingDirectory}");
+        _output.WriteLine($"Function host working directory: {workingDirectory}");
         var process = new Process
         {
             StartInfo = new ProcessStartInfo
@@ -154,7 +157,7 @@ public class PostToOrcasiteTests
                 return;
             }
             string data = args.Data;
-            Console.WriteLine($"[stdout] {data}");
+            _output.WriteLine($"[stdout] {data}");
             if (data.Contains("Executing 'PostToOrcasite'"))
             {
                 postsAttempted++;
@@ -167,9 +170,9 @@ public class PostToOrcasiteTests
         };
         process.ErrorDataReceived += (sender, args) =>
         {
-            if (args.Data != null)
+            if (!string.IsNullOrEmpty(args.Data))
             {
-                Console.WriteLine($"[stderr] {args.Data}");
+                _output.WriteLine($"[stderr] {args.Data}");
             }
         };
         bool processStarted = false;
@@ -177,12 +180,12 @@ public class PostToOrcasiteTests
         {
             processStarted = process.Start();
             Assert.True(processStarted);
-            Console.WriteLine($"Started with PID {process.Id}");
+            _output.WriteLine($"Started with PID {process.Id}");
             process.BeginOutputReadLine();
             process.BeginErrorReadLine();
 
             await Task.Delay(5000); // Give it time to start
-            Console.WriteLine($"Is func.exe running: {Process.GetProcessesByName("func").Length > 0}");
+            _output.WriteLine($"Is func.exe running: {Process.GetProcessesByName("func").Length > 0}");
 
             var item = JsonConvert.DeserializeObject<dynamic>(_sampleOrcaHelloDetection);
             if (item == null)
@@ -199,7 +202,7 @@ public class PostToOrcasiteTests
 
             dynamic? result = await metadataContainer.UpsertItemAsync(item);
             int httpStatusCode = (int)result.StatusCode;
-            Console.WriteLine($"Cosmos DB Emulator returned status: {httpStatusCode}");
+            _output.WriteLine($"Cosmos DB Emulator returned status: {httpStatusCode}");
             Assert.True(httpStatusCode >= 200 && httpStatusCode < 300, $"Cosmos DB update failed with status {httpStatusCode}");
 
             // Wait up to 30 seconds for the Azure function to execute.
@@ -207,17 +210,15 @@ public class PostToOrcasiteTests
             int seconds;
             for (seconds = 0; seconds < maxSeconds && postsSucceeded == oldPostsSucceeded; seconds++)
             {
-                Console.Write(".");
                 await Task.Delay(1000); // Wait one second before checking again.
             }
-            Console.WriteLine($"Waited for {seconds} seconds");
+            _output.WriteLine($"Waited for {seconds} seconds");
 
-            Console.WriteLine($"Posts attempted: {postsAttempted}, posts succeeded: {postsSucceeded}");
-#if false
+            _output.WriteLine($"Posts attempted: {postsAttempted}, posts succeeded: {postsSucceeded}");
+
             // Verify it ran.
             Assert.True(postsAttempted > oldPostsAttempted, $"Incorrect posts attempted: {postsAttempted} after {seconds} seconds");
             Assert.True(postsSucceeded > oldPostsSucceeded, $"Incorrect posts succeeded: {postsSucceeded} after {seconds} seconds");
-#endif
         }
         finally
         {
