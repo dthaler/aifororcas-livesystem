@@ -78,8 +78,8 @@ jobs:
       run: dotnet restore -r ${{ env.DOTNET_RUNTIME }}
     - name: Build
       run: dotnet build --no-restore -c Release -r ${{ env.DOTNET_RUNTIME }} --self-contained
-    - name: Install Azure Functions Core Tools
-      run: npm install -g azure-functions-core-tools@4 --unsafe-perm true
+    - name: Install Azure Functions Core Tools via Chocolatey
+      run: choco install azure-functions-core-tools -y
     - name: Check func CLI
       run: |
         Get-Command func
