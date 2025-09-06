@@ -10,7 +10,7 @@ namespace NotificationSystem.Models
 {
     public class OrcasiteHelper
     {
-        private static HttpClient _httpClient;
+        private readonly HttpClient _httpClient;
         private string _orcasiteHostname;
         private string _orcasiteApiKey;
         private JsonElement? _orcasiteFeedsArray;
@@ -99,6 +99,7 @@ namespace NotificationSystem.Models
             if (_orcasiteFeedsArray == null)
             {
                 _logger.LogError("Failed to retrieve orcasite feeds.");
+                throw new InvalidOperationException("Failed to load Orcasite feeds");
             }
         }
 
@@ -145,7 +146,7 @@ namespace NotificationSystem.Models
                 }
                 if (feedId.ValueKind != JsonValueKind.String)
                 {
-                    _logger.LogError($"Invalid id kind in ExecuteTask: {nodeName.ValueKind}");
+                    _logger.LogError($"Invalid id kind in ExecuteTask: {feedId.ValueKind}");
                     continue;
                 }
 
@@ -292,7 +293,10 @@ namespace NotificationSystem.Models
             };
             request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/vnd.api+json");
             request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.api+json"));
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _orcasiteApiKey);
+            if (_orcasiteApiKey != null)
+            {
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _orcasiteApiKey);
+            }
 
             HttpResponseMessage response = await _httpClient.SendAsync(request);
             if (response.IsSuccessStatusCode)

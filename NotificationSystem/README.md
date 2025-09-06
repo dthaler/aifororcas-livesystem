@@ -98,7 +98,7 @@ curl -X GET '<ModeratorEmailEndpoint>'
 ## Prerequisites
 
 - Access to the Orca Conservancy Azure subscription
-- Install the [.NET Core 3.1 SDK](https://dotnet.microsoft.com/download/dotnet-core/3.1)
+- Install the [.NET 8.0 SDK](https://dotnet.microsoft.com/download)
 - Azure Function Tools
     - If using Visual Studio, include "Azure development" workload in installation
     - If using Visual Studio Code, add the "Azure Functions" extension
@@ -132,8 +132,6 @@ Create local.settings.json in the current directory (NotificationSystem) using t
     "IsEncrypted": false,
     "Values": {
         "AzureWebJobsStorage": "UseDevelopmentStorage=true",
-        "FUNCTIONS_WORKER_RUNTIME": "dotnet",
-
         "OrcaNotificationStorageSetting": "<storage account connection string>",
         "aifororcasmetadatastore_DOCUMENTDB": "<cosmos db connection string>",
         "AWS_ACCESS_KEY_ID": "<AWS Access Key>",

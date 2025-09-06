@@ -111,7 +111,7 @@ public class PostToOrcasiteTests
     /// Such configuration should use beta.orcasound.net (the default).
     /// </summary>
     /// <returns></returns>
-    [Fact(Timeout = 1200000)] // 120 seconds max
+    [Fact(Timeout = 120000)] // 120 seconds max
     [Trait("Category", "Cosmos")]
     public async Task UpdateCosmosDb()
     {
@@ -149,8 +149,20 @@ public class PostToOrcasiteTests
                 CreateNoWindow = true,
             }
         };
+
+#if false
+        // Ensure the function host receives required env vars.
+        if (!string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("ORCASITE_APIKEY")))
+        {
+            process.StartInfo.Environment["ORCASITE_APIKEY"] = Environment.GetEnvironmentVariable("ORCASITE_APIKEY")!;
+        }
+        process.StartInfo.Environment["ORCASITE_HOSTNAME"] = Environment.GetEnvironmentVariable("ORCASITE_HOSTNAME") ?? "beta.orcasound.net";
+#endif
+
+        int outputStarted = 0;
         int postsAttempted = 0;
         int postsSucceeded = 0;
+
         process.OutputDataReceived += (sender, args) =>
         {
             if (args.Data == null) {
@@ -158,11 +170,14 @@ public class PostToOrcasiteTests
             }
             string data = args.Data;
             _output.WriteLine($"[stdout] {data}");
+            if (data.Contains("Determining projects"))
+            {
+                outputStarted++;
+            }
             if (data.Contains("Executing 'PostToOrcasite'"))
             {
                 postsAttempted++;
             }
-
             if (data.Contains("posted successfully"))
             {
                 postsSucceeded++;
@@ -197,9 +212,6 @@ public class PostToOrcasiteTests
             var random = new Random();
             item.whaleFoundConfidence = random.NextDouble() * 30 + 50;
 
-            int oldPostsAttempted = postsAttempted;
-            int oldPostsSucceeded = postsSucceeded;
-
             dynamic? result = await metadataContainer.UpsertItemAsync(item);
             int httpStatusCode = (int)result.StatusCode;
             _output.WriteLine($"Cosmos DB Emulator returned status: {httpStatusCode}");
@@ -208,17 +220,19 @@ public class PostToOrcasiteTests
             // Wait up to 30 seconds for the Azure function to execute.
             const int maxSeconds = 30;
             int seconds;
-            for (seconds = 0; seconds < maxSeconds && postsSucceeded == oldPostsSucceeded; seconds++)
+            for (seconds = 0; seconds < maxSeconds && postsSucceeded == 0; seconds++)
             {
                 await Task.Delay(1000); // Wait one second before checking again.
             }
             _output.WriteLine($"Waited for {seconds} seconds");
 
-            _output.WriteLine($"Posts attempted: {postsAttempted}, posts succeeded: {postsSucceeded}");
-
             // Verify it ran.
-            Assert.True(postsAttempted > oldPostsAttempted, $"Incorrect posts attempted: {postsAttempted} after {seconds} seconds");
-            Assert.True(postsSucceeded > oldPostsSucceeded, $"Incorrect posts succeeded: {postsSucceeded} after {seconds} seconds");
+            _output.WriteLine($"Output started: {outputStarted}");
+            Assert.True(outputStarted > 0, $"Function output not detected");
+            _output.WriteLine($"Posts attempted: {postsAttempted}");
+            Assert.True(postsAttempted > 0, $"Incorrect posts attempted: {postsAttempted} after {seconds} seconds");
+            _output.WriteLine($"Posts succeeded: {postsSucceeded}");
+            Assert.True(postsSucceeded > 0, $"Incorrect posts succeeded: {postsSucceeded} after {seconds} seconds");
         }
         finally
         {
