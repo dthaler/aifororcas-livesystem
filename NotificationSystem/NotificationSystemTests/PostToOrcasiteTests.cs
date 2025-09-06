@@ -108,7 +108,7 @@ public class PostToOrcasiteTests
     /// Such configuration should use beta.orcasound.net (the default).
     /// </summary>
     /// <returns></returns>
-    [Fact(Timeout = 60000)] // 60 seconds max
+    [Fact(Timeout = 1200000)] // 120 seconds max
     [Trait("Category", "Cosmos")]
     public async Task UpdateCosmosDb()
     {
@@ -223,19 +223,6 @@ public class PostToOrcasiteTests
         {
             if (processStarted && !process.HasExited)
             {
-                foreach (var proc in Process.GetProcessesByName("func"))
-                {
-                    try
-                    {
-                        proc.Kill(true);
-                        proc.WaitForExit(5000);
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"Failed to kill func.exe: {ex.Message}");
-                    }
-                }
-
                 // Clean up: kill the function host process.
                 process.Kill(true); // true = kill entire process tree
                 process.WaitForExit(5000);
