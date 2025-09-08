@@ -213,7 +213,7 @@ namespace NotificationSystem.Tests.Integration
             // Arrange.
             var logger = _serviceProvider.GetRequiredService<ILogger>();
             var configuration = _serviceProvider.GetRequiredService<IConfiguration>();
-            
+
             var connectionString = configuration["aifororcasmetadatastore_DOCUMENTDB"];
             if (string.IsNullOrEmpty(connectionString) || connectionString == "UseDevelopmentStorage=true")
             {
@@ -221,39 +221,30 @@ namespace NotificationSystem.Tests.Integration
                 return;
             }
 
-            try
+            // Act - Test Cosmos DB connection using DI.
+            var cosmosClient = _serviceProvider.GetService<CosmosClient>();
+            if (cosmosClient == null)
             {
-                // Act - Test Cosmos DB connection using DI.
-                var cosmosClient = _serviceProvider.GetService<CosmosClient>();
-                if (cosmosClient == null)
-                {
-                    logger.LogWarning("Skipping Cosmos DB connection test - client not available");
-                    return;
-                }
-
-                // Try to get the database and container to verify connection.
-                var database = cosmosClient.GetDatabase("predictions");
-                var container = database.GetContainer("metadata");
-                
-                // Perform a simple read operation to test the connection.
-                var query = new QueryDefinition("SELECT TOP 1 * FROM c");
-                using var iterator = container.GetItemQueryIterator<dynamic>(query);
-                
-                if (iterator.HasMoreResults)
-                {
-                    var response = await iterator.ReadNextAsync();
-                    logger.LogInformation($"Successfully connected to Cosmos DB. Response status: {response.StatusCode}");
-                }
-
-                // Assert - If we reach here without exception, the connection is working.
-                Assert.True(true, "Cosmos DB connection test passed");
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning($"Cosmos DB connection test failed: {ex.Message}");
-                // Skip test gracefully if external dependency is not available.
+                logger.LogWarning("Skipping Cosmos DB connection test - client not available");
                 return;
             }
+
+            // Try to get the database and container to verify connection.
+            var database = cosmosClient.GetDatabase("predictions");
+            var container = database.GetContainer("metadata");
+
+            // Perform a simple read operation to test the connection.
+            var query = new QueryDefinition("SELECT TOP 1 * FROM c");
+            using var iterator = container.GetItemQueryIterator<dynamic>(query);
+
+            if (iterator.HasMoreResults)
+            {
+                var response = await iterator.ReadNextAsync();
+                logger.LogInformation($"Successfully connected to Cosmos DB. Response status: {response.StatusCode}");
+            }
+
+            // Assert - If we reach here without exception, the connection is working.
+            Assert.True(true, "Cosmos DB connection test passed");
         }
 
         public void Dispose()
