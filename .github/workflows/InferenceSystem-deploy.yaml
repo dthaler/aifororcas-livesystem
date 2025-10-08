@@ -1,4 +1,4 @@
-name: InferenceSystem
+name: InferenceSystem-deploy
 
 on:
   pull_request:
@@ -15,7 +15,7 @@ on:
 concurrency:
   # Cancel any CI/CD workflow currently in progress for the same PR.
   # Allow running concurrently with any other commits.
-  group: build-${{ github.event.pull_request.number || github.sha }}
+  group: InferenceSystem-deploy-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: true
 
 permissions:  # added using https://github.com/step-security/secure-repo
@@ -29,7 +29,7 @@ jobs:
       ACR_REGISTRY: orcaconservancycr.azurecr.io
     steps:
     - name: Download Docker image artifact
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: live-inference-system-docker-image
         path: ./image-artifact
