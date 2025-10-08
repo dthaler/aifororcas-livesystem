@@ -28,11 +28,44 @@ jobs:
       IMAGE_NAME: live-inference-system
       ACR_REGISTRY: orcaconservancycr.azurecr.io
     steps:
-    - name: Download Docker image artifact
+    - name: Install GitHub CLI
+      run: sudo apt-get install gh
+
+    - name: Get latest successful run ID
+      id: get_run
+      run: |
+        RUN_ID=$(gh run list \
+          --repo "${{ github.repository }}" \
+          --workflow "InferenceSystem" \
+          --branch main \
+          --status success \
+          --limit 1 \
+          --json databaseId \
+          --jq '.[0].databaseId')
+        echo "run_id=$RUN_ID" >> $GITHUB_OUTPUT
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Check if run ID was found
+      if: ${{ steps.get_run.outputs.run_id == '' }}
+      run: echo "No successful run found for InferenceSystem on main branch" && exit 1
+
+    - name: Check if ACR secrets are set
+      run: |
+        if [ -z "${{ secrets.ACR_USERNAME }}" ] || [ -z "${{ secrets.ACR_PASSWORD }}" ]; then
+          echo "ACR credentials are missing"
+          exit 1
+        else
+          echo "ACR credentials are set"
+        fi
+
+    - name: Download Docker image artifact from latest run
       uses: actions/download-artifact@v4
       with:
         name: live-inference-system-docker-image
         path: ./image-artifact
+        run-id: ${{ steps.get_run.outputs.run_id }}
+        github-token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Load Docker image
       run: |
