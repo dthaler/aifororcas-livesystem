@@ -1,6 +1,12 @@
 name: InferenceSystem
 
 on:
+  pull_request:
+    branches:
+    - main
+    paths:
+    - InferenceSystem/**
+    - .github/workflows/InferenceSystem.yaml
   push:
     tags:
       - 'InferenceSystem.v[0-9]+.[0-9]+.[0-9]+'
