@@ -4,9 +4,9 @@ librosa>=0.8.0,<0.11.0
 pydub==0.24.1
 pandas>=1.1.0,<2.0
 numpy==1.19.5
-torch>=1.7,<1.8
-torchvision>=0.8,<0.9
-torchaudio>=0.8,<0.9
+torch==1.7.1
+torchvision==0.8.2
+torchaudio==0.7.2
 git+https://github.com/fastaudio/fastai_audio@0.1
 ipython
 spacy>=3.5.4,<3.7.0
