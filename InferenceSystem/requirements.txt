@@ -4,7 +4,9 @@ librosa>=0.8.0,<0.11.0
 pydub==0.24.1
 pandas>=1.1.0,<2.0
 numpy==1.19.5
-torchaudio>=0.6.0,<0.14.0
+torch<1.8
+torchvision<0.9
+torchaudio<0.8
 git+https://github.com/fastaudio/fastai_audio@0.1
 ipython
 spacy>=3.5.4,<3.7.0
@@ -14,8 +16,6 @@ bs4
 tqdm
 matplotlib
 m3u8
-torch
-torchvision
 azure-cosmos
 azure-cosmosdb-table
 azure-storage-blob

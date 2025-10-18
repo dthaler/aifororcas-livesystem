@@ -15,9 +15,7 @@ RUN apt-get update && apt-get install -y \
 # Install pip requirements
 WORKDIR /usr/src/install
 COPY ./requirements.txt ./requirements.txt
-RUN python3 -m pip install --upgrade pip && \
-    pip install 'torch<1.8' 'torchvision<0.9' 'torchaudio<0.8' && \
-    pip install -r requirements.txt
+RUN python3 -m pip install --upgrade pip && pip install -r requirements.txt
 
 # From now on, we will be working in the app's running directory
 WORKDIR /usr/src/app
