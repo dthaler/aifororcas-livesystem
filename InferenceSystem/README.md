@@ -183,7 +183,7 @@ This can be completed in two ways.
    - Create the secret
    - Apply the deployment
 
-**Important:** The container image is now common across all hydrophones. Configuration files are stored in a Kubernetes ConfigMap and mounted into the container at `/config/`. The container reads the namespace and loads the corresponding config file (e.g., namespace `bush-point` loads `/config/bush-point.yml`).
+**Important:** The container image is now common across all hydrophones. Configuration files are stored in a Kubernetes ConfigMap and mounted into the container at `/config/`. Each deployment specifies which config file to use via the `CONFIG_FILE` environment variable (e.g., `CONFIG_FILE=/config/bush-point.yml`).
 
 ## Building the docker container for production
 
@@ -195,18 +195,18 @@ should take a much shorter time in future builds.
 docker build . -t live-inference-system -f ./Dockerfile
 ```
 
-**Important:** The Docker container is now common across all hydrophones and does not include configuration files. The container automatically detects which hydrophone it's serving by reading the Kubernetes namespace and loading the configuration from a ConfigMap mounted at `/config/`. You no longer need to edit the Dockerfile or build separate images for each hydrophone location.
+**Important:** The Docker container is now common across all hydrophones and does not include configuration files. The container uses the `CONFIG_FILE` environment variable to load the configuration from a ConfigMap mounted at `/config/`. You no longer need to edit the Dockerfile or build separate images for each hydrophone location.
 
 
 ## Running the docker container
 
-From the `InferenceSystem` directory, run the following command. You need to specify the `--config` argument when running locally since the container won't be in a Kubernetes environment with namespace detection.
+From the `InferenceSystem` directory, run the following command. You need to specify the `--config` argument when running locally since the container won't have the `CONFIG_FILE` environment variable set.
 
 ```
 docker run --rm -it --env-file .env live-inference-system python3 -u ./src/LiveInferenceOrchestrator.py --config ./config/Test/FastAI_LiveHLS_OrcasoundLab.yml
 ```
 
-**Note:** When deployed to Kubernetes, the container automatically detects its namespace and loads the configuration from the ConfigMap. The `--config` argument is only needed for local testing.
+**Note:** When deployed to Kubernetes, the container uses the `CONFIG_FILE` environment variable to load the configuration from the ConfigMap. The `--config` argument is only needed for local testing.
 
 In addition, you should see something similar to the following in your console.
 
@@ -280,7 +280,7 @@ docker tag live-inference-system orcaconservancycr.azurecr.io/live-inference-sys
 docker push orcaconservancycr.azurecr.io/live-inference-system:<date-of-deployment>.<model-type>.<Rounds-trained-on>.v<Major>
 ```
 
-**Note:** You only need to build and push one container image now, regardless of the number of hydrophones. Each hydrophone deployment references the same image but runs in a different namespace, which the container detects to load the appropriate configuration.
+**Note:** You only need to build and push one container image now, regardless of the number of hydrophones. Each hydrophone deployment references the same image but runs in a different namespace with its own `CONFIG_FILE` environment variable to load the appropriate configuration.
 
 ## Migration from Hydrophone-Specific Images
 
@@ -301,18 +301,18 @@ If you're currently using the old hydrophone-specific container images (e.g., ta
    # etc. for other hydrophones
    ```
 
-The container will automatically detect which namespace it's running in and load the appropriate configuration. The old hydrophone-specific images will continue to work, but using the common image approach will significantly reduce build times and simplify maintenance.
+The container will use the `CONFIG_FILE` environment variable specified in the deployment to load the appropriate configuration. The old hydrophone-specific images will continue to work, but using the common image approach will significantly reduce build times and simplify maintenance.
 
 # Deploying an updated docker build to Azure Kubernetes Service
 
-We are deploying one hydrophone per namespace. The container automatically detects its namespace and loads the configuration from a ConfigMap at runtime. To deploy a hydrophone, the following Kubernetes resources need to be created:
+We are deploying one hydrophone per namespace. The container uses the `CONFIG_FILE` environment variable to load the configuration from a ConfigMap at runtime. To deploy a hydrophone, the following Kubernetes resources need to be created:
 
 1. Namespace: used to group resources and identify which hydrophone configuration to use
 2. ConfigMap: holds the configuration files for all hydrophones (shared across namespaces)
 3. Secret: holds connection strings used by inference system
 4. Deployment: forces one instance of inference system to remain running at all times
 
-**Important:** Configuration files are stored in a Kubernetes ConfigMap and mounted at `/config/` in the container. The container reads the namespace (e.g., `bush-point`) and loads the corresponding config file (e.g., `/config/bush-point.yml`).
+**Important:** Configuration files are stored in a Kubernetes ConfigMap and mounted at `/config/` in the container. Each deployment specifies which config file to use via the `CONFIG_FILE` environment variable (e.g., `CONFIG_FILE=/config/bush-point.yml`).
 
 ## Prerequisites
 
@@ -381,7 +381,7 @@ kubectl create secret generic inference-system -n bush-point \
 kubectl apply -f deploy/bush-point.yaml
 ```
 
-**Note:** All deployment files now reference the same container image and mount the ConfigMap at `/config/`. The container determines which hydrophone it's serving based on the namespace and loads the corresponding config file from the ConfigMap.
+**Note:** All deployment files now reference the same container image and mount the ConfigMap at `/config/`. Each deployment specifies which config file to use via the `CONFIG_FILE` environment variable.
 
 6. To verify that the container is running, check logs:
 
