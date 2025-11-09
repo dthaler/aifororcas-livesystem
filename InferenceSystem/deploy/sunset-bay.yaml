@@ -17,15 +17,13 @@ spec:
       - name: inference-system
         # NOTE: This is the old hydrophone-specific image. When using the new common container image,
         # update to a tag without the hydrophone location suffix (e.g., 11-15-20.FastAI.R1-12.v0)
-        # The container uses the CONFIG_FILE environment variable to load the config from ConfigMap.
+        # The container automatically detects the namespace and loads the corresponding config from ConfigMap.
         image: orcaconservancycr.azurecr.io/live-inference-system:09-19-24.FastAI.R1-12.SunsetBay.v0
         resources:
           limits:
             cpu: 1
             memory: 3G
         env:
-          - name: CONFIG_FILE
-            value: "/config/sunset-bay.yml"
           - name: AZURE_COSMOSDB_PRIMARY_KEY
             valueFrom:
               secretKeyRef:

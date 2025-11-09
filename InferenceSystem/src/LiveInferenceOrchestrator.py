@@ -96,11 +96,11 @@ def populate_metadata_json(
 
 def get_config_path():
 	"""
-	Determine the config file path.
+	Determine the config file path based on Kubernetes namespace or command line argument.
 	
 	Priority:
 	1. Command line --config argument (for local testing)
-	2. CONFIG_FILE environment variable (for Kubernetes deployments)
+	2. Kubernetes namespace detection (for production deployments)
 	
 	Returns:
 		tuple: (config_path, args) where config_path is the path to the config file
@@ -115,14 +115,20 @@ def get_config_path():
 		print(f"Using config from command line argument: {args.config}")
 		return args.config, args
 	
-	# Check for CONFIG_FILE environment variable
-	config_path = os.getenv('CONFIG_FILE')
-	if config_path:
-		print(f"Using config from CONFIG_FILE environment variable: {config_path}")
+	# Detect Kubernetes namespace and derive config path
+	namespace_file = "/var/run/secrets/kubernetes.io/serviceaccount/namespace"
+	if os.path.exists(namespace_file):
+		with open(namespace_file, "r") as f:
+			namespace = f.read().strip()
+		
+		# Config files are mounted from ConfigMap at /config/{namespace}.yml
+		config_path = f"/config/{namespace}.yml"
+		print(f"Detected Kubernetes namespace: {namespace}")
+		print(f"Using config from ConfigMap: {config_path}")
 		return config_path, args
 	
-	# If neither config argument nor environment variable is set, raise error
-	raise ValueError("No config file specified. Provide --config argument or set CONFIG_FILE environment variable.")
+	# If neither config argument nor namespace detection works, raise error
+	raise ValueError("No config file specified. Provide --config argument or run in Kubernetes with namespace.")
 
 if __name__ == "__main__":
 	# Get config path
