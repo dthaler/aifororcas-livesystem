@@ -183,7 +183,7 @@ This can be completed in two ways.
    - Create the secret
    - Apply the deployment
 
-**Important:** The container image is now common across all hydrophones. Configuration files are stored in a Kubernetes ConfigMap and mounted into the container at `/config/`. The container reads the namespace and loads the corresponding config file (e.g., namespace `bush-point` loads `/config/bush-point.yml`).
+**Important:** The container image is now common across all hydrophones. Configuration files are stored in a Kubernetes ConfigMap and mounted into the container at `/config/`. The container automatically detects the namespace and loads the corresponding config file (e.g., namespace `bush-point` loads `/config/bush-point.yml`).
 
 ## Building the docker container for production
 
@@ -195,7 +195,7 @@ should take a much shorter time in future builds.
 docker build . -t live-inference-system -f ./Dockerfile
 ```
 
-**Important:** The Docker container is now common across all hydrophones and does not include configuration files. The container automatically detects which hydrophone it's serving by reading the Kubernetes namespace and loading the configuration from a ConfigMap mounted at `/config/`. You no longer need to edit the Dockerfile or build separate images for each hydrophone location.
+**Important:** The Docker container is now common across all hydrophones and does not include configuration files. The container automatically detects the namespace and loads the configuration from a ConfigMap mounted at `/config/`. You no longer need to edit the Dockerfile or build separate images for each hydrophone location.
 
 
 ## Running the docker container

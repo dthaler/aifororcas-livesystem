@@ -99,11 +99,11 @@ def get_config_path():
 	Determine the config file path based on Kubernetes namespace or command line argument.
 	
 	Priority:
-	1. Command line --config argument (for backward compatibility and local testing)
-	2. Kubernetes namespace detection with ConfigMap (for production deployments)
+	1. Command line --config argument (for local testing)
+	2. Kubernetes namespace detection (for production deployments)
 	
 	Returns:
-		str: Path to the config file
+		tuple: (config_path, args) where config_path is the path to the config file
 	"""
 	# Check if --config argument is provided
 	parser = argparse.ArgumentParser()
@@ -112,30 +112,23 @@ def get_config_path():
 	args, _ = parser.parse_known_args()
 	
 	if args.config:
+		print(f"Using config from command line argument: {args.config}")
 		return args.config, args
 	
-	# Try to detect Kubernetes namespace
+	# Detect Kubernetes namespace and derive config path
 	namespace_file = "/var/run/secrets/kubernetes.io/serviceaccount/namespace"
 	if os.path.exists(namespace_file):
-		try:
-			with open(namespace_file, "r") as f:
-				namespace = f.read().strip()
-			
-			# Config files are mounted from ConfigMap at /config/{namespace}.yml
-			config_path = f"/config/{namespace}.yml"
-			
-			if os.path.exists(config_path):
-				print(f"Detected Kubernetes namespace: {namespace}")
-				print(f"Using config from ConfigMap: {config_path}")
-				return config_path, args
-			else:
-				raise ValueError(f"Config file not found for namespace '{namespace}' at {config_path}. Ensure ConfigMap is properly mounted.")
-		except Exception as e:
-			print(f"Error reading namespace or config: {e}")
-			raise
+		with open(namespace_file, "r") as f:
+			namespace = f.read().strip()
+		
+		# Config files are mounted from ConfigMap at /config/{namespace}.yml
+		config_path = f"/config/{namespace}.yml"
+		print(f"Detected Kubernetes namespace: {namespace}")
+		print(f"Using config from ConfigMap: {config_path}")
+		return config_path, args
 	
 	# If neither config argument nor namespace detection works, raise error
-	raise ValueError("No config file specified. Either provide --config argument or run in Kubernetes with namespace and ConfigMap mounted at /config.")
+	raise ValueError("No config file specified. Provide --config argument or run in Kubernetes with namespace.")
 
 if __name__ == "__main__":
 	# Get config path
