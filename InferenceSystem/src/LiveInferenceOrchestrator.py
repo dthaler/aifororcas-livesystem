@@ -202,7 +202,12 @@ if __name__ == "__main__":
 			break
 		iteration_count += 1
 
+		print("UTC now                         : ", datetime.utcnow())
+		print("Requesting current_clip_end_time: ", current_clip_end_time)
 		clip_path, start_timestamp, current_clip_end_time = hls_stream.get_next_clip(current_clip_end_time)
+		print("Received clip_path              : ", clip_path)
+		print("Received start_timestamp        : ", start_timestamp)
+		print("Received current_clip_end_time  : ", current_clip_end_time)
 
 		# if this clip was at the end of a bucket, clip_duration_in_seconds < 60, if so we skip it
 		if clip_path:
