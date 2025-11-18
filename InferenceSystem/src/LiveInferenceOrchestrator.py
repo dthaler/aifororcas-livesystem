@@ -205,6 +205,7 @@ if __name__ == "__main__":
 		print("UTC now                         : ", datetime.utcnow())
 		print("Requesting current_clip_end_time: ", current_clip_end_time)
 		clip_path, start_timestamp, current_clip_end_time = hls_stream.get_next_clip(current_clip_end_time)
+		print("UTC now                         : ", datetime.utcnow())
 		print("Received clip_path              : ", clip_path)
 		print("Received start_timestamp        : ", start_timestamp)
 		print("Received current_clip_end_time  : ", current_clip_end_time)
@@ -212,7 +213,9 @@ if __name__ == "__main__":
 		# if this clip was at the end of a bucket, clip_duration_in_seconds < 60, if so we skip it
 		if clip_path:
 			spectrogram_path = spectrogram_visualizer.write_spectrogram(clip_path)
+			print("UTC now                         : ", datetime.utcnow())
 			prediction_results = whalecall_classification_model.predict(clip_path)
+			print("UTC now                         : ", datetime.utcnow())
 
 			print("\nlocal_confidences: {}\n".format(prediction_results["local_confidences"]))
 			print("local_predictions: {}\n".format(prediction_results["local_predictions"]))
@@ -237,6 +240,7 @@ if __name__ == "__main__":
 						audio_blob_client.upload_blob(data)
 					audio_uri = assemble_blob_uri(AZURE_STORAGE_AUDIO_CONTAINER_NAME, audio_clip_name)
 					print("Uploaded audio to Azure Storage")
+					print("UTC now                         : ", datetime.utcnow())
 
 					# upload spectrogram to Azure Blob Storage
 					spectrogram_name = os.path.basename(spectrogram_path)
@@ -245,6 +249,7 @@ if __name__ == "__main__":
 						spectrogram_blob_client.upload_blob(data)
 					spectrogram_uri = assemble_blob_uri(AZURE_STORAGE_SPECTROGRAM_CONTAINER_NAME, spectrogram_name)
 					print("Uploaded spectrogram to Azure Storage")
+					print("UTC now                         : ", datetime.utcnow())
 
 					# Insert metadata into CosmosDB
 					metadata = populate_metadata_json(audio_uri, spectrogram_uri, prediction_results, start_timestamp, hls_polling_interval, model_type, hls_hydrophone_id)
@@ -252,6 +257,7 @@ if __name__ == "__main__":
 					container = database.get_container_client(COSMOSDB_CONTAINER_NAME)
 					container.create_item(body=metadata)
 					print("Added metadata to Azure CosmosDB")
+					print("UTC now                         : ", datetime.utcnow())
 				
 			# delete local wav, spec, metadata
 			if config_params["delete_local_wavs"]:
