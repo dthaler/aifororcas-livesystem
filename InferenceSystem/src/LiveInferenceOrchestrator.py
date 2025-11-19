@@ -215,7 +215,7 @@ if __name__ == "__main__":
 			spectrogram_path = spectrogram_visualizer.write_spectrogram(clip_path)
 			print("UTC now                         : ", datetime.utcnow())
 			prediction_results = whalecall_classification_model.predict(clip_path)
-			print("UTC now                         : ", datetime.utcnow())
+			print("\nUTC now                         : ", datetime.utcnow())
 
 			print("\nlocal_confidences: {}\n".format(prediction_results["local_confidences"]))
 			print("local_predictions: {}\n".format(prediction_results["local_predictions"]))
