@@ -10,7 +10,7 @@ from pathlib import Path
 from numpy import floor
 from audio.data import AudioConfig, SpectrogramConfig, AudioList
 import torchaudio
-
+from datetime import datetime
 
 # Monkey-patch torchaudio.load to avoid torchcodec dependency
 # torchaudio 2.9.0+ defaults to torchcodec backend which requires additional installation
@@ -114,6 +114,8 @@ class FastAIModel():
         Function which generates local predictions using wavefile
         '''
 
+        print("PREDICT started:            ", datetime.utcnow())
+
         # Creates local directory to save 2 second clops
         # local_dir = "./fastai_dir/"
         local_dir = tempfile.mkdtemp()+"/"
@@ -145,6 +147,7 @@ class FastAIModel():
             local_dir,
             ""
         )
+        print("PREDICT extracted segments: ", datetime.utcnow())
         
         # Definining Audio config needed to create on the fly mel spectograms
         config = AudioConfig(standardize=False,
@@ -171,14 +174,19 @@ class FastAIModel():
             test_data_folder, config=config).split_none().label_empty()
         testdb = test.transform(tfms).databunch(bs=32)
 
+        print("PREDICT created testdb:     ", datetime.utcnow())
+
         # Scoring each 2 sec clip
         predictions = []
         pathList = list(pd.Series(test_data_folder.ls()).astype('str'))
         for item in testdb.x:
             predictions.append(self.model.predict(item)[2][1])
+            print("PREDICT scored clip:        ", datetime.utcnow())
 
         # clean folder
         shutil.rmtree(local_dir)
+
+        print("PREDICT scored 2 sec clips: ", datetime.utcnow())
 
         # Aggregating predictions
 
@@ -194,6 +202,8 @@ class FastAIModel():
         # Sorting the file based on start_time_s
         prediction = prediction.sort_values(
             ['start_time_s']).reset_index(drop=True)
+
+        print("PREDICT sorted predictions: ", datetime.utcnow())
 
         # Rolling Window (to average at per second level)
         submission = pd.DataFrame(
@@ -214,8 +224,10 @@ class FastAIModel():
             'duration_s': 1.0,
             'confidence': [prediction.confidence[prediction.shape[0]-1]]
             })
-        submission = submission.append(lastLine, ignore_index=True)
+        submission = pd.concat([submission, lastLine], ignore_index=True)
         submission = submission[['wav_filename', 'start_time_s', 'duration_s', 'confidence']]
+
+        print("PREDICT added last row:     ", datetime.utcnow())
 
         # initialize output JSON
         result_json = {}
@@ -229,5 +241,7 @@ class FastAIModel():
         result_json['global_confidence'] = submission.loc[(submission['confidence'] > self.threshold), 'confidence'].mean()*100
         if pd.isnull(result_json["global_confidence"]):
             result_json["global_confidence"] = 0
+
+        print("PREDICT finished:           ", datetime.utcnow())
 
         return result_json
