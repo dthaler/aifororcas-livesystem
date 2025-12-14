@@ -104,10 +104,48 @@ def extract_segments(audioPath, sampleDict, destnPath, suffix):
 
 
 class FastAIModel():
-    def __init__(self, model_path, model_name="stg2-rn18.pkl", threshold=0.5, min_num_positive_calls_threshold=3):
+    def __init__(self, model_path, model_name="stg2-rn18.pkl", threshold=0.5, min_num_positive_calls_threshold=3, export_onnx=False):
         self.model = load_model(model_path, model_name)
         self.threshold = threshold
         self.min_num_positive_calls_threshold = min_num_positive_calls_threshold
+        
+        # Export to ONNX if requested
+        if export_onnx:
+            self._export_to_onnx(model_path, model_name)
+
+    def _export_to_onnx(self, model_path, model_name):
+        '''
+        Export the FastAI model to ONNX format
+        '''
+        import os
+        
+        # Create ONNX output path
+        onnx_filename = model_name.replace('.pkl', '.onnx')
+        onnx_path = os.path.join(model_path, onnx_filename)
+        
+        # Get the underlying PyTorch model
+        pytorch_model = self.model.model
+        pytorch_model.eval()
+        
+        # Create a dummy input tensor with the expected shape
+        # FastAI audio models typically expect (batch_size, channels, height, width) for spectrograms
+        # Using a typical spectrogram shape: (1, 1, 256, 256)
+        dummy_input = torch.randn(1, 1, 256, 256)
+        
+        # Export to ONNX
+        torch.onnx.export(
+            pytorch_model,
+            dummy_input,
+            onnx_path,
+            export_params=True,
+            opset_version=11,
+            do_constant_folding=True,
+            input_names=['input'],
+            output_names=['output'],
+            dynamic_axes={'input': {0: 'batch_size'}, 'output': {0: 'batch_size'}}
+        )
+        
+        print(f"Model exported to ONNX format at: {onnx_path}")
 
     def predict(self, wav_file_path):
         '''

@@ -110,6 +110,7 @@ def get_config_path():
 	parser = argparse.ArgumentParser()
 	parser.add_argument("--config", type=str, help="config.yml", required=False)
 	parser.add_argument("--max_iterations", type=int, help="maximum number of clips to process", default=None)
+	parser.add_argument("--export-onnx", action="store_true", help="export model to ONNX format after loading")
 	args, _ = parser.parse_known_args()
 	
 	if args.config:
@@ -148,7 +149,7 @@ if __name__ == "__main__":
 		whalecall_classification_model = OrcaDetectionModel(model_path, threshold=model_local_threshold, min_num_positive_calls_threshold=model_global_threshold)
 	elif model_type == "FastAI":
 		model_name = config_params["model_name"]
-		whalecall_classification_model = FastAIModel(model_path=model_path, model_name=model_name, threshold=model_local_threshold, min_num_positive_calls_threshold=model_global_threshold)
+		whalecall_classification_model = FastAIModel(model_path=model_path, model_name=model_name, threshold=model_local_threshold, min_num_positive_calls_threshold=model_global_threshold, export_onnx=args.export_onnx)
 	else:
 		raise ValueError("model_type should be one of AudioSet / FastAIModel")
 
