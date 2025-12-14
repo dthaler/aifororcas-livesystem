@@ -129,6 +129,19 @@ cd InferenceSystem
 python src/LiveInferenceOrchestrator.py --config ./config/Test/FastAI_LiveHLS_OrcasoundLab.yml
 ```
 
+### Command-line Arguments
+
+The following command-line arguments are supported:
+
+- `--config <path>`: Path to the configuration YAML file (required for local testing)
+- `--max_iterations <n>`: Maximum number of audio clips to process (useful for testing)
+- `--export-onnx`: Export the FastAI model to ONNX format after loading. The ONNX file will be saved in the same directory as the model with a `.onnx` extension.
+
+Example with ONNX export:
+```
+python src/LiveInferenceOrchestrator.py --config ./config/Test/FastAI_LiveHLS_OrcasoundLab.yml --export-onnx
+```
+
 You should see the following logs in your terminal. Since this is a Test config, no audio is uploaded to Azure and no metadata is written to CosmosDB.
 
 ```

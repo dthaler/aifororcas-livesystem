@@ -99,6 +99,17 @@ jobs:
       run: |
         call .\inference-venv\Scripts\activate.bat && python src/LiveInferenceOrchestrator.py --config ./config/Test/FastAI_DateRangeHLS_OrcasoundLab.yml --max_iterations 2
 
+    - name: Test ONNX export
+      working-directory: InferenceSystem
+      shell: cmd
+      run: |
+        call .\inference-venv\Scripts\activate.bat && python src/LiveInferenceOrchestrator.py --config ./config/Test/FastAI_LiveHLS_OrcasoundLab.yml --max_iterations 1 --export-onnx
+        if not exist "model\model.onnx" (
+          echo ONNX file not found!
+          exit /b 1
+        )
+        echo ONNX export successful!
+
   test-ubuntu:
     runs-on: ubuntu-latest
     needs: changes
@@ -172,6 +183,16 @@ jobs:
       run: |
         source ./inference-venv/bin/activate && python src/LiveInferenceOrchestrator.py --config ./config/Test/FastAI_DateRangeHLS_OrcasoundLab.yml --max_iterations 2
 
+    - name: Test ONNX export
+      working-directory: InferenceSystem
+      run: |
+        source ./inference-venv/bin/activate && python src/LiveInferenceOrchestrator.py --config ./config/Test/FastAI_LiveHLS_OrcasoundLab.yml --max_iterations 1 --export-onnx
+        if [ ! -f "model/model.onnx" ]; then
+          echo "ONNX file not found!"
+          exit 1
+        fi
+        echo "ONNX export successful!"
+
   test-docker:
     runs-on: ubuntu-latest
     needs: changes
@@ -234,3 +255,21 @@ jobs:
           --config /config/Test/FastAI_LiveHLS_OrcasoundLab.yml \
           --max_iterations 2 | tee output.log
         test "$(grep -c "global_prediction" output.log)" -eq 2
+
+    - name: Test docker container with ONNX export
+      working-directory: InferenceSystem
+      run: |
+        docker run --rm \
+          --env-file .env \
+          -v $PWD/config:/config \
+          -v $PWD/model:/app/model \
+          live-inference-system \
+          python3 -u ./src/LiveInferenceOrchestrator.py \
+          --config /config/Test/FastAI_LiveHLS_OrcasoundLab.yml \
+          --max_iterations 1 \
+          --export-onnx | tee output-onnx.log
+        if [ ! -f "model/model.onnx" ]; then
+          echo "ONNX file not found!"
+          exit 1
+        fi
+        echo "ONNX export successful!"
