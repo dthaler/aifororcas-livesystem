@@ -144,16 +144,19 @@ class FastAIModel():
         dummy_input = torch.randn(1, 1, 256, 256)
         
         # Export to ONNX
+        # Using opset_version=18 to support adaptive pooling operations
+        # dynamo=False to use the legacy exporter which handles adaptive_max_pool2d
         torch.onnx.export(
             pytorch_model,
             dummy_input,
             onnx_path,
             export_params=True,
-            opset_version=11,
+            opset_version=18,
             do_constant_folding=True,
             input_names=['input'],
             output_names=['output'],
-            dynamic_axes={'input': {0: 'batch_size'}, 'output': {0: 'batch_size'}}
+            dynamic_axes={'input': {0: 'batch_size'}, 'output': {0: 'batch_size'}},
+            dynamo=False
         )
         
         print(f"Model exported to ONNX format at: {onnx_path}")
