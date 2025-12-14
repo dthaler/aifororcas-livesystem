@@ -16,6 +16,7 @@ matplotlib
 m3u8
 torch>=2.1.0
 torchvision>=0.16.0
+onnxscript>=0.1.0
 azure-cosmos
 azure-cosmosdb-table
 azure-storage-blob
