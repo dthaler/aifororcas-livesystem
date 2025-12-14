@@ -115,10 +115,21 @@ class FastAIModel():
 
     def _export_to_onnx(self, model_path, model_name):
         '''
-        Export the FastAI model to ONNX format
-        '''
-        import os
+        Export the FastAI model to ONNX format.
         
+        Args:
+            model_path: Path to the directory containing the model
+            model_name: Name of the model file (e.g., 'model.pkl')
+        
+        Raises:
+            RuntimeError: If ONNX export fails due to model incompatibility
+            IOError: If unable to write ONNX file to disk
+        
+        Note:
+            Uses a dummy input with shape (1, 1, 256, 256) for tracing, which matches
+            the typical spectrogram dimensions used in this project. The actual inference
+            input processing is handled by the FastAI model's own data transformation pipeline.
+        '''
         # Create ONNX output path
         onnx_filename = model_name.replace('.pkl', '.onnx')
         onnx_path = os.path.join(model_path, onnx_filename)
