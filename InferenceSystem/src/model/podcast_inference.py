@@ -1,4 +1,5 @@
 import argparse
+import gc
 import glob
 import json
 import os
