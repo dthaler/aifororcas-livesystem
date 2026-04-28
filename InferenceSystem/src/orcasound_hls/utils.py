@@ -14,6 +14,8 @@ import m3u8
 from botocore import UNSIGNED
 from botocore.config import Config
 
+from orcasound_hls.types import HLS_DOWNLOAD_TIMEOUT_S
+
 logger = logging.getLogger(__name__)
 
 S3_BASE_URL = "https://s3-us-west-2.amazonaws.com"
@@ -136,7 +138,8 @@ def m3u8_exists(bucket: str, hydrophone_id: str, folder_epoch: int) -> bool:
 def load_hls_playlist(bucket: str, hydrophone_id: str, folder_epoch: int):
     """Load an M3U8 playlist and return its segment list."""
     url = m3u8_url(bucket, hydrophone_id, folder_epoch)
-    stream_obj = m3u8.load(url)
+    # Explicit timeout: m3u8.load defaults to None (infinite)
+    stream_obj = m3u8.load(url, timeout=HLS_DOWNLOAD_TIMEOUT_S)
     return stream_obj.segments
 
 
