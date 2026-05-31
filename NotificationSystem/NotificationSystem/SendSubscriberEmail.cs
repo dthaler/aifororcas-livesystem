@@ -45,8 +45,9 @@ namespace NotificationSystem
             foreach (var message in messages)
             {
                 string location = EmailTemplate.GetLocation(message);
-                string emailSubject = EmailTemplate.GetSubscriberEmailSubject(location);
-                string body = CreateBody(message);
+                string category = "Southern Resident Killer Whale";
+                string emailSubject = EmailTemplate.GetSubscriberEmailSubject(category, location);
+                string body = CreateBody(message, category);
                 foreach (var emailEntity in subscribers)
                 {
                     await timeConstraint;
@@ -105,11 +106,9 @@ namespace NotificationSystem
             return messagesJson;
         }
 
-        private string CreateBody(JObject messageJson)
+        private string CreateBody(JObject messageJson, string category)
         {
-            var bodyBuilder = new StringBuilder("<h1>Confirmed SRKW detections:</h1>\n<ul>");
-
-            return EmailTemplate.GetSubscriberEmailBody(messageJson, _orcasiteHelper);
+            return EmailTemplate.GetSubscriberEmailBody(messageJson, category, _orcasiteHelper);
         }
     }
 }
