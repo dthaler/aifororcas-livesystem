@@ -22,7 +22,7 @@ public static class Services
                 var handler = sp.GetRequiredService<AuthenticationHeaderHandler>();
                 handler.InnerHandler = new HttpClientHandler();
 
-                var client = new HttpClient(handler);
+                var client = new HttpClient(handler, disposeHandler: false);
                 client.BaseAddress = new System.Uri(appSettings.APIUrl);
                 return client;
             });
