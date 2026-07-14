@@ -53,11 +53,24 @@ public class AccountService : IAccountService
             var authState = await _authenticationStateProvider.GetAuthenticationStateAsync();
             var user = authState.User;
 
-            if (user.Identity.IsAuthenticated)
+            if (user?.Identity != null && user.Identity.IsAuthenticated)
             {
-                var username = user.FindFirst(c => c.Type == "email")?.Value;
-                var identity = user.Identity.Name;
-                return string.IsNullOrWhiteSpace(username) ? identity : username;
+                // Try preferred_username first (Azure AD v2.0 tokens).
+                var username = user.FindFirst(c => c.Type == "preferred_username")?.Value;
+
+                // Fall back to email claim.
+                if (string.IsNullOrWhiteSpace(username))
+                    username = user.FindFirst(c => c.Type == "email")?.Value;
+
+                // Fall back to name claim.
+                if (string.IsNullOrWhiteSpace(username))
+                    username = user.FindFirst(c => c.Type == "name")?.Value;
+
+                // Fall back to identity name.
+                if (string.IsNullOrWhiteSpace(username))
+                    username = user.Identity.Name;
+
+                return username ?? string.Empty;
             }
         }
 
@@ -66,23 +79,25 @@ public class AccountService : IAccountService
 
     public async Task Login()
     {
-        AuthenticationResult token = null;
-
         var scopes = new string[] { $"api://{_appSettings.AzureAd.ClientId}/{_appSettings.AzureAd.DefaultScope}" };
 
         try
         {
-            token = await _msalService.AcquireTokenAsync(prompt: LoginPrompt.Login, scopes: scopes);
+            var token = await _msalService.AcquireTokenAsync(prompt: LoginPrompt.Login, scopes: scopes);
+
+            if (token == null)
+            {
+                Console.WriteLine("Login failed: Token acquisition returned null.");
+                return;
+            }
 
             await _localStorage.SetItemAsync("authToken", token.AccessToken);
 
             await ((ApiAuthenticationStateProvider)_authenticationStateProvider).MarkUserAsAuthenticated();
-
-            _httpService.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", token.AccessToken);
         }
         catch (Exception exception)
         {
-            Console.WriteLine(exception.Message);
+            Console.WriteLine($"Login error: {exception.Message}");
         }
     }
 

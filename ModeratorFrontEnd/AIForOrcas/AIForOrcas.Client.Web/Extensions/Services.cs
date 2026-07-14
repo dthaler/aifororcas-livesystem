@@ -13,9 +13,16 @@ public static class Services
     {
         if (!string.IsNullOrWhiteSpace(appSettings?.APIUrl))
         {
+            // Register the authentication handler.
+            builder.Services.AddScoped<AuthenticationHeaderHandler>();
+
+            // Register HttpClient with the handler.
             builder.Services.AddScoped(sp =>
             {
-                var client = new HttpClient();
+                var handler = sp.GetRequiredService<AuthenticationHeaderHandler>();
+                handler.InnerHandler = new HttpClientHandler();
+
+                var client = new HttpClient(handler);
                 client.BaseAddress = new System.Uri(appSettings.APIUrl);
                 return client;
             });
