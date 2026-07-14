@@ -76,9 +76,16 @@ namespace AIForOrcas.Client.BL.Services
 			var dataJson = JsonSerializer.Serialize(request);
 			var stringContent = new StringContent(dataJson, Encoding.UTF8, "application/json");
 
-			// TODO: Catch authentication issues
-
 			var httpResponseMessage = await httpClient.PutAsync(url, stringContent);
+
+			if (!httpResponseMessage.IsSuccessStatusCode)
+			{
+				var errorContent = await httpResponseMessage.Content.ReadAsStringAsync();
+				var statusCode = (int)httpResponseMessage.StatusCode;
+
+				throw new HttpRequestException(
+					$"Failed to update detection. Status: {statusCode} {httpResponseMessage.ReasonPhrase}. Details: {errorContent}");
+			}
 		}
 
 		public async Task<Detection> GetDetectionAsync(string id)

@@ -4,7 +4,8 @@
 	{
 		public static string ExtractName(string email)
 		{
-			if (!email.Contains("@") && !email.Contains("#"))
+			if (string.IsNullOrEmpty(email) ||
+				(!email.Contains("@") && !email.Contains("#")))
 				return email;
 
 			var working = email;
