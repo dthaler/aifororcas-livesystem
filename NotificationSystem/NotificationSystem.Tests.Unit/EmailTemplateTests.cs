@@ -1,10 +1,14 @@
+using AIForOrcas.DTO;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Moq;
 using Newtonsoft.Json.Linq;
 using NotificationSystem.Models;
 using NotificationSystem.Template;
+using NotificationSystem.Tests.Common;
 using System;
 using System.Collections.Generic;
-using Microsoft.Extensions.Logging;
-using Moq;
+using System.Linq;
 
 namespace NotificationSystem.Tests.Unit
 {
@@ -15,17 +19,10 @@ namespace NotificationSystem.Tests.Unit
         /// <summary>
         /// Tests that GetSubscriberEmailBody generates correct map URIs for various locations
         /// by verifying the generated HTML contains the expected image URLs.
-        /// Uses mocked OrcasiteHelper to simulate production behavior.
+        /// Uses OrcasiteHelper initialization to simulate production behavior.
         /// </summary>
         [Theory]
-        [InlineData("Sunset Bay", "sunset-bay.jpg")]
-        [InlineData("Mast Center", "mast-center.jpg")]
-        [InlineData("North San Juan Channel", "north-sjc.jpg")]
-        [InlineData("Point Robinson", "point-robinson.jpg")]
-        [InlineData("Bush Point", "bush-point.jpg")]
-        [InlineData("Andrews Bay", "andrews-bay.jpg")]
-        [InlineData("Port Townsend", "port-townsend.jpg")]
-        [InlineData("Orcasound Lab", "orcasound-lab.jpg")]
+        [MemberData(nameof(HydrophoneLocationMapUriData))]
         public void GetSubscriberEmailBody_GeneratesCorrectMapUri_ForLocationName(string locationName, string expectedFileName)
         {
             // Arrange
@@ -43,30 +40,19 @@ namespace NotificationSystem.Tests.Unit
                 comments = "Test comments"
             });
 
-            // Mock OrcasiteHelper to simulate production behavior
-            var mockOrcasiteHelper = new Mock<OrcasiteHelper>(
-                new Mock<ILogger<OrcasiteHelper>>().Object,
-                new System.Net.Http.HttpClient()
-            );
-            
-            // Setup slug mappings based on actual Orcasite feeds
-            mockOrcasiteHelper.Setup(x => x.GetSlugByLocationName(It.IsAny<string>()))
-                .Returns<string>(name =>
-                {
-                    // Return actual slugs from Orcasite for locations where they differ from simple transformation
-                    if (name == "North San Juan Channel") return "north-sjc";
-                    // For other locations, return null to fall back to simple transformation
-                    return null;
-                });
+            var orcasiteHelper = CreateInitializedOrcasiteHelper();
 
             string expectedMapUrl = $"https://orcanotificationstorage.blob.core.windows.net/images/{expectedFileName}";
 
             // Act - with OrcasiteHelper as in production
-            string emailBody = EmailTemplate.GetSubscriberEmailBody(message, "Southern Resident Killer Whale", mockOrcasiteHelper.Object);
+            string emailBody = EmailTemplate.GetSubscriberEmailBody(message, "Southern Resident Killer Whale", orcasiteHelper);
 
             // Assert
             Assert.Contains(expectedMapUrl, emailBody);
         }
+
+        public static IEnumerable<object[]> HydrophoneLocationMapUriData =>
+            GetHydrophoneLocationMapUriData();
 
         /// <summary>
         /// Tests that location names with multiple words are correctly converted with hyphens in URIs.
@@ -89,16 +75,10 @@ namespace NotificationSystem.Tests.Unit
                 comments = "Test comments"
             });
 
-            // Mock OrcasiteHelper to return the correct slug
-            var mockOrcasiteHelper = new Mock<OrcasiteHelper>(
-                new Mock<ILogger<OrcasiteHelper>>().Object,
-                new System.Net.Http.HttpClient()
-            );
-            mockOrcasiteHelper.Setup(x => x.GetSlugByLocationName("North San Juan Channel"))
-                .Returns("north-sjc");
+            var orcasiteHelper = CreateInitializedOrcasiteHelper();
 
             // Act - with OrcasiteHelper as in production
-            string emailBody = EmailTemplate.GetSubscriberEmailBody(message, "Southern Resident Killer Whale", mockOrcasiteHelper.Object);
+            string emailBody = EmailTemplate.GetSubscriberEmailBody(message, "Southern Resident Killer Whale", orcasiteHelper);
 
             // Assert - the URI should use "north-sjc" from OrcasiteHelper
             Assert.Contains("north-sjc.jpg", emailBody);
@@ -192,20 +172,10 @@ namespace NotificationSystem.Tests.Unit
                 comments = "Test comments"
             });
 
-            // Mock OrcasiteHelper that returns the actual slug
-            var mockOrcasiteHelper = new Mock<OrcasiteHelper>(
-                new Mock<ILogger<OrcasiteHelper>>().Object,
-                new System.Net.Http.HttpClient()
-            );
-            mockOrcasiteHelper.Setup(x => x.GetSlugByLocationName(It.IsAny<string>()))
-                .Returns<string>(locationName => 
-                {
-                    if (locationName == "North San Juan Channel") return "north-sjc";
-                    return null;
-                });
+            var orcasiteHelper = CreateInitializedOrcasiteHelper();
             
             // Act
-            string emailBody = EmailTemplate.GetSubscriberEmailBody(message, "Southern Resident Killer Whale", mockOrcasiteHelper.Object);
+            string emailBody = EmailTemplate.GetSubscriberEmailBody(message, "Southern Resident Killer Whale", orcasiteHelper);
 
             // Assert - should use "north-sjc" from OrcasiteHelper, not "north-san-juan-channel"
             Assert.Contains("north-sjc.jpg", emailBody);
@@ -492,6 +462,41 @@ namespace NotificationSystem.Tests.Unit
 
             // Assert
             Assert.Null(location);
+        }
+
+        private static string GetExpectedFileName(string locationName)
+        {
+            string hydrophoneId = HydrophoneLocations.GetIdByLocation(locationName)
+                ?? throw new InvalidOperationException($"No hydrophone ID found for location '{locationName}'.");
+
+            return hydrophoneId.Replace("rpi_", string.Empty).Replace('_', '-');
+        }
+
+        private static IEnumerable<object[]> GetHydrophoneLocationMapUriData()
+        {
+            _ = CreateInitializedOrcasiteHelper();
+
+            return HydrophoneLocations.Locations
+                .Select(locationName => new object[]
+                {
+                    locationName,
+                    $"{GetExpectedFileName(locationName)}.jpg"
+                });
+        }
+
+        private static OrcasiteHelper CreateInitializedOrcasiteHelper()
+        {
+            var container = OrcasiteTestHelper.GetMockOrcasiteHelperWithRequestVerification(
+                new Mock<ILogger<OrcasiteHelper>>().Object);
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["ORCASITE_HOSTNAME"] = "live.orcasound.net"
+                })
+                .Build();
+
+            container.Helper.InitializeAsync(configuration).GetAwaiter().GetResult();
+            return container.Helper;
         }
 
         /// <summary>
