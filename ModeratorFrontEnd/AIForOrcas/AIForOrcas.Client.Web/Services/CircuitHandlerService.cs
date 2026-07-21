@@ -4,13 +4,13 @@ namespace AIForOrcas.Client.Web.Services;
 
 public class CircuitHandlerService : CircuitHandler
 {
-    private static int _instanceCount = 0;
-    private readonly int _instanceId;
+    private readonly ITokenStore _tokenStore;
+    private readonly Microsoft.Extensions.Logging.ILogger<CircuitHandlerService> _logger;
 
-    public CircuitHandlerService()
+    public CircuitHandlerService(ITokenStore tokenStore, Microsoft.Extensions.Logging.ILogger<CircuitHandlerService> logger)
     {
-        _instanceId = Interlocked.Increment(ref _instanceCount);
-        Console.WriteLine($"[CircuitHandlerService #{_instanceId}] Constructed");
+        _tokenStore = tokenStore;
+        _logger = logger;
     }
 
     public string CircuitId { get; private set; }
@@ -18,13 +18,14 @@ public class CircuitHandlerService : CircuitHandler
     public override Task OnCircuitOpenedAsync(Circuit circuit, CancellationToken cancellationToken)
     {
         CircuitId = circuit.Id;
-        Console.WriteLine($"[CircuitHandlerService #{_instanceId}] CIRCUIT OPENED: {CircuitId}");
+        Microsoft.Extensions.Logging.LoggerExtensions.LogDebug(_logger, "Circuit opened: {CircuitId}", CircuitId);
         return Task.CompletedTask;
     }
 
     public override Task OnCircuitClosedAsync(Circuit circuit, CancellationToken cancellationToken)
     {
-        Console.WriteLine($"[CircuitHandlerService #{_instanceId}] CIRCUIT CLOSED: {CircuitId}");
+        Microsoft.Extensions.Logging.LoggerExtensions.LogDebug(_logger, "Circuit closed: {CircuitId}", circuit.Id);
+        _tokenStore.RemoveToken(circuit.Id);
         CircuitId = null;
         return Task.CompletedTask;
     }
