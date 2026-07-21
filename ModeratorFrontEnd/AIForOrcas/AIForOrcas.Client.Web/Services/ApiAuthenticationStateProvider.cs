@@ -46,7 +46,9 @@ public class ApiAuthenticationStateProvider : AuthenticationStateProvider
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Error parsing token from store");
+                    _tokenStore.RemoveToken(circuitId);
+                    _currentUser = new ClaimsPrincipal(new ClaimsIdentity());
+                    _logger.LogError(ex, "Error parsing token from store; token cleared");
                 }
             }
             else
