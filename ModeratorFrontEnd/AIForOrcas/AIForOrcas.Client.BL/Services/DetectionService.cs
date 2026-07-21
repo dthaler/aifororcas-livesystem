@@ -83,9 +83,7 @@ namespace AIForOrcas.Client.BL.Services
 			var httpClient = _httpClientFactory.CreateClient("AuthenticatedAPI");
 			var httpRequest = new HttpRequestMessage(HttpMethod.Put, url) { Content = stringContent };
 
-			var token = _authTokenProvider.GetToken();
-			if (!string.IsNullOrWhiteSpace(token))
-				httpRequest.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+			_authTokenProvider.ApplyToken(httpRequest);
 
 			var httpResponseMessage = await httpClient.SendAsync(httpRequest);
 
