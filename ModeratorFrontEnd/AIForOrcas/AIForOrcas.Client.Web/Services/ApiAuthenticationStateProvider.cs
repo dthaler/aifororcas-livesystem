@@ -22,12 +22,12 @@ public class ApiAuthenticationStateProvider : AuthenticationStateProvider
         _logger = logger;
         
         _instanceId = Interlocked.Increment(ref _instanceCount);
-        _logger.LogError("!!! ApiAuthenticationStateProvider Instance #{InstanceId} CREATED !!!", _instanceId);
+        _logger.LogDebug("ApiAuthenticationStateProvider Instance #{InstanceId} created", _instanceId);
     }
 
     public override Task<AuthenticationState> GetAuthenticationStateAsync()
     {
-        _logger.LogError("!!! GetAuthenticationStateAsync called on Instance #{InstanceId} !!!", _instanceId);
+        _logger.LogDebug("GetAuthenticationStateAsync called on Instance #{InstanceId}", _instanceId);
         
         var circuitId = _circuitHandler.CircuitId;
         if (!string.IsNullOrWhiteSpace(circuitId))
@@ -42,7 +42,7 @@ public class ApiAuthenticationStateProvider : AuthenticationStateProvider
                     claims.Add(new Claim("authToken", token));
                     _currentUser = new ClaimsPrincipal(new ClaimsIdentity(claims, "jwt"));
                     
-                    _logger.LogError("!!! Instance #{InstanceId} - User authenticated from token store !!!", _instanceId);
+                    _logger.LogDebug("Instance #{InstanceId} - User authenticated from token store", _instanceId);
                 }
                 catch (Exception ex)
                 {
@@ -52,7 +52,7 @@ public class ApiAuthenticationStateProvider : AuthenticationStateProvider
             else
             {
                 _currentUser = new ClaimsPrincipal(new ClaimsIdentity());
-                _logger.LogError("!!! Instance #{InstanceId} - No token in store !!!", _instanceId);
+                _logger.LogDebug("Instance #{InstanceId} - No token in store", _instanceId);
             }
         }
         else
@@ -66,7 +66,7 @@ public class ApiAuthenticationStateProvider : AuthenticationStateProvider
 
     public Task MarkUserAsAuthenticated(string token)
     {
-        _logger.LogError("!!! MarkUserAsAuthenticated called on Instance #{InstanceId} !!!", _instanceId);
+        _logger.LogDebug("MarkUserAsAuthenticated called on Instance #{InstanceId}", _instanceId);
         
         if (string.IsNullOrWhiteSpace(token))
         {
@@ -81,12 +81,12 @@ public class ApiAuthenticationStateProvider : AuthenticationStateProvider
             if (!string.IsNullOrWhiteSpace(circuitId))
             {
                 _tokenStore.SetToken(circuitId, token);
-                _logger.LogError("!!! Instance #{InstanceId} - Token stored with circuit ID: {CircuitId} !!!", 
+                _logger.LogDebug("Instance #{InstanceId} - Token stored with circuit ID: {CircuitId}", 
                     _instanceId, circuitId);
             }
             else
             {
-                _logger.LogError("!!! Instance #{InstanceId} - WARNING: No circuit ID, cannot store token !!!", _instanceId);
+                _logger.LogWarning("Instance #{InstanceId} - No circuit ID, cannot store token", _instanceId);
             }
 
             // Parse claims and update local state.
@@ -95,7 +95,7 @@ public class ApiAuthenticationStateProvider : AuthenticationStateProvider
             
             _currentUser = new ClaimsPrincipal(new ClaimsIdentity(claims, "jwt"));
             
-            _logger.LogError("!!! Instance #{InstanceId} - _currentUser.IsAuthenticated = {IsAuth} !!!", 
+            _logger.LogDebug("Instance #{InstanceId} - _currentUser.IsAuthenticated = {IsAuth}", 
                 _instanceId, _currentUser.Identity?.IsAuthenticated ?? false);
             
             // Notify authentication state changed.
@@ -113,7 +113,7 @@ public class ApiAuthenticationStateProvider : AuthenticationStateProvider
 
     public void MarkUserAsLoggedOut()
     {
-        _logger.LogError("!!! MarkUserAsLoggedOut called on Instance #{InstanceId} !!!", _instanceId);
+        _logger.LogDebug("MarkUserAsLoggedOut called on Instance #{InstanceId}", _instanceId);
         
         var circuitId = _circuitHandler.CircuitId;
         if (!string.IsNullOrWhiteSpace(circuitId))

@@ -23,12 +23,12 @@ namespace AIForOrcas.Client.Web.Extensions
             HttpRequestMessage request,
             CancellationToken cancellationToken)
         {
-            _logger.LogError("!!! [LoggingHandler #{InstanceId}] SendAsync CALLED for {Method} {Uri} !!!",
+            _logger.LogInformation("[LoggingHandler #{InstanceId}] SendAsync for {Method} {Uri}",
                 _instanceId, request.Method, request.RequestUri);
 
             var response = await base.SendAsync(request, cancellationToken);
 
-            _logger.LogError("!!! [LoggingHandler #{InstanceId}] Response {StatusCode} !!!",
+            _logger.LogInformation("[LoggingHandler #{InstanceId}] Response {StatusCode}",
                 _instanceId, response.StatusCode);
 
             return response;

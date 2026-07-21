@@ -20,7 +20,7 @@ public class AuthenticationHeaderHandler : DelegatingHandler
         _circuit = circuit;
         _logger = logger;
         _instanceId = Interlocked.Increment(ref _instanceCount);
-        _logger.LogError("!!! [AuthHandler #{InstanceId}] CONSTRUCTED !!!", _instanceId);
+        _logger.LogDebug("[AuthHandler #{InstanceId}] Constructed", _instanceId);
     }
 
     protected override async Task<HttpResponseMessage> SendAsync(
@@ -41,7 +41,7 @@ public class AuthenticationHeaderHandler : DelegatingHandler
 
         var response = await base.SendAsync(request, cancellationToken);
         
-        _logger.LogError("!!! [AuthHandler #{InstanceId}] Response: {StatusCode} !!!", 
+        _logger.LogDebug("[AuthHandler #{InstanceId}] Response: {StatusCode}", 
             _instanceId, response.StatusCode);
         
         return response;
