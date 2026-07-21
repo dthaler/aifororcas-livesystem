@@ -11,18 +11,19 @@ namespace AIForOrcas.Client.BL.Services
 {
     public class TagService : ITagService
     {
-		private readonly HttpClient httpClient;
+		private readonly IHttpClientFactory _httpClientFactory;
 		private string api = "api/tags";
 		private JsonSerializerOptions defaultJsonSerializerOptions => new JsonSerializerOptions() { PropertyNameCaseInsensitive = true };
 
-		public TagService(HttpClient httpClient)
+		public TagService(IHttpClientFactory httpClientFactory)
 		{
-			this.httpClient = httpClient;
+			_httpClientFactory = httpClientFactory;
 		}
 
 		// Get the list of unique tags
 		public async Task<List<string>> GetUniqueTagsAsync()
 		{
+			var httpClient = _httpClientFactory.CreateClient("UnauthenticatedAPI");
 			var httpResponseMessage = await httpClient.GetAsync(api);
 
 			if (httpResponseMessage.IsSuccessStatusCode)
@@ -46,6 +47,7 @@ namespace AIForOrcas.Client.BL.Services
 			var dataJson = JsonSerializer.Serialize(payload);
 			var stringContent = new StringContent(dataJson, Encoding.UTF8, "application/json");
 
+			var httpClient = _httpClientFactory.CreateClient("AuthenticatedAPI");
 			var httpResponseMessage = await httpClient.PutAsync(api, stringContent);
 
 			if (httpResponseMessage.IsSuccessStatusCode)
@@ -68,6 +70,7 @@ namespace AIForOrcas.Client.BL.Services
 		{
 			var url = $"{api}?tag={HttpUtility.UrlEncode(tag)}";
 
+			var httpClient = _httpClientFactory.CreateClient("AuthenticatedAPI");
 			var httpResponseMessage = await httpClient.DeleteAsync(url);
 
 			if (httpResponseMessage.IsSuccessStatusCode)
