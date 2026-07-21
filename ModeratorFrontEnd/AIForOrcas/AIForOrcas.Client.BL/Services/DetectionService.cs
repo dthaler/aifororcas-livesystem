@@ -11,22 +11,24 @@ namespace AIForOrcas.Client.BL.Services
 {
 	public class DetectionService : IDetectionService
 	{
-		private readonly HttpClient httpClient;
 		private string api = "api/detections";
 		private JsonSerializerOptions defaultJsonSerializerOptions => new JsonSerializerOptions() { PropertyNameCaseInsensitive = true };
+        private readonly HttpClient _unauthenticated;
+        private readonly HttpClient _authenticated;
 
-		public DetectionService(HttpClient httpClient)
-		{
-			this.httpClient = httpClient;
-		}
+        public DetectionService(HttpClient unauthenticated, HttpClient authenticated)
+        {
+            _unauthenticated = unauthenticated;
+            _authenticated = authenticated;
+        }
 
-		// Get detections based on passed view, pagination options, and filter options
-		private async Task<PaginatedResponseDTO<List<Detection>>> GetDetectionsAsync(string viewName, PaginationOptionsDTO paginationOptions, IFilterOptions filterOptions)
+        // Get detections based on passed view, pagination options, and filter options
+        private async Task<PaginatedResponseDTO<List<Detection>>> GetDetectionsAsync(string viewName, PaginationOptionsDTO paginationOptions, IFilterOptions filterOptions)
 		{
 			var prefix = api.Contains("?") ? $"{api}/{viewName}&" : $"{api}/{viewName}?";
 			var url = $"{prefix}{paginationOptions.QueryString}&{filterOptions.QueryString}";
 
-			var httpResponseMessage = await httpClient.GetAsync(url);
+			var httpResponseMessage = await _unauthenticated.GetAsync(url);
 
 			if (httpResponseMessage.IsSuccessStatusCode)
 			{
@@ -76,16 +78,23 @@ namespace AIForOrcas.Client.BL.Services
 			var dataJson = JsonSerializer.Serialize(request);
 			var stringContent = new StringContent(dataJson, Encoding.UTF8, "application/json");
 
-			// TODO: Catch authentication issues
+			var httpResponseMessage = await _authenticated.PutAsync(url, stringContent);
 
-			var httpResponseMessage = await httpClient.PutAsync(url, stringContent);
-		}
+            if (!httpResponseMessage.IsSuccessStatusCode)
+            {
+                var errorContent = await httpResponseMessage.Content.ReadAsStringAsync();
+                var statusCode = (int)httpResponseMessage.StatusCode;
+
+                throw new HttpRequestException(
+                    $"Failed to update detection. Status: {statusCode} {httpResponseMessage.ReasonPhrase}. Details: {errorContent}");
+            }
+        }
 
 		public async Task<Detection> GetDetectionAsync(string id)
 		{
 			var url = $"{api}/{id}";
 
-			var httpResponseMessage = await httpClient.GetAsync(url);
+			var httpResponseMessage = await _unauthenticated.GetAsync(url);
 
 			if (httpResponseMessage.IsSuccessStatusCode)
 			{
