@@ -6,28 +6,26 @@ public class CircuitHandlerService : CircuitHandler
 {
     private static int _instanceCount = 0;
     private readonly int _instanceId;
+
     public CircuitHandlerService()
     {
         _instanceId = Interlocked.Increment(ref _instanceCount);
+        Console.WriteLine($"[CircuitHandlerService #{_instanceId}] Constructed");
     }
 
     public string CircuitId { get; private set; }
 
-    public override Task OnConnectionUpAsync(Circuit circuit, CancellationToken cancellationToken)
+    public override Task OnCircuitOpenedAsync(Circuit circuit, CancellationToken cancellationToken)
     {
         CircuitId = circuit.Id;
-        return base.OnConnectionUpAsync(circuit, cancellationToken);
-    }
-
-    public override Task OnConnectionDownAsync(Circuit circuit, CancellationToken cancellationToken)
-    {
-        CircuitId = null;
-        return base.OnConnectionDownAsync(circuit, cancellationToken);
+        Console.WriteLine($"[CircuitHandlerService #{_instanceId}] CIRCUIT OPENED: {CircuitId}");
+        return Task.CompletedTask;
     }
 
     public override Task OnCircuitClosedAsync(Circuit circuit, CancellationToken cancellationToken)
     {
+        Console.WriteLine($"[CircuitHandlerService #{_instanceId}] CIRCUIT CLOSED: {CircuitId}");
         CircuitId = null;
-        return base.OnCircuitClosedAsync(circuit, cancellationToken);
+        return Task.CompletedTask;
     }
 }
