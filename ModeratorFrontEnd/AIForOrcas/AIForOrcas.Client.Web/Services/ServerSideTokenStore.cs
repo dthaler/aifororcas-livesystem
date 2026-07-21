@@ -46,7 +46,7 @@ public class ServerSideTokenStore : ITokenStore
     private void CleanupExpiredTokens()
     {
         var now = DateTimeOffset.UtcNow;
-        foreach (var token in _tokens)
+        foreach (var token in _tokens.ToArray())
         {
             if (token.Value.ExpiresAtUtc <= now)
             {
