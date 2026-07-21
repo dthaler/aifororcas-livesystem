@@ -22,22 +22,18 @@ public static class Services
         // Register the scoped token provider that resolves the token from the active circuit.
         builder.Services.AddScoped<IAuthTokenProvider, CircuitAuthTokenProvider>();
 
-        builder.Services.AddScoped<LoggingHandler>();
-
         // Register HTTP clients with handlers.
         builder.Services.AddHttpClient("UnauthenticatedAPI", (sp, client) =>
         {
             var apiUrl = sp.GetRequiredService<AppSettings>().APIUrl;
             client.BaseAddress = new Uri(apiUrl);
-        })
-        .AddHttpMessageHandler<LoggingHandler>();
+        });
 
         builder.Services.AddHttpClient("AuthenticatedAPI", (sp, client) =>
         {
             var apiUrl = sp.GetRequiredService<AppSettings>().APIUrl;
             client.BaseAddress = new Uri(apiUrl);
-        })
-        .AddHttpMessageHandler<LoggingHandler>();
+        });
 
         builder.Services.AddScoped<IDetectionService, DetectionService>();
 
