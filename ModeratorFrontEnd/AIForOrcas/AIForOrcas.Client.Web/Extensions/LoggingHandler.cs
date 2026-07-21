@@ -16,7 +16,7 @@ namespace AIForOrcas.Client.Web.Extensions
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _instanceId = Interlocked.Increment(ref _instanceCount);
-            _logger.LogError("!!! [LoggingHandler #{InstanceId}] CONSTRUCTED !!!", _instanceId);
+            _logger.LogDebug("[LoggingHandler #{InstanceId}] Constructed", _instanceId);
         }
 
         protected override async Task<HttpResponseMessage> SendAsync(
