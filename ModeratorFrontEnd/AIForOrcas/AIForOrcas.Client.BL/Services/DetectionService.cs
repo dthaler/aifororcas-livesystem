@@ -78,7 +78,7 @@ namespace AIForOrcas.Client.BL.Services
 			var dataJson = JsonSerializer.Serialize(request);
 			var stringContent = new StringContent(dataJson, Encoding.UTF8, "application/json");
 
-			// Create client on-demand from the current scope
+			// Create client on-demand from the current scope.
 			var httpClient = _httpClientFactory.CreateClient("AuthenticatedAPI");
 			var httpResponseMessage = await httpClient.PutAsync(url, stringContent);
 

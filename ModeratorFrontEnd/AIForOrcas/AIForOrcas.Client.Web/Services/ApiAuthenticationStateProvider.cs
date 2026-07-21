@@ -78,16 +78,12 @@ public class ApiAuthenticationStateProvider : AuthenticationStateProvider
         {
             // Store token in server-side store (SINGLETON - shared across instances)
             var circuitId = _circuitHandler.CircuitId;
-            if (!string.IsNullOrWhiteSpace(circuitId))
+            if (string.IsNullOrWhiteSpace(circuitId))
             {
-                _tokenStore.SetToken(circuitId, token);
-                _logger.LogDebug("Instance #{InstanceId} - Token stored with circuit ID: {CircuitId}", 
-                    _instanceId, circuitId);
+                _logger.LogWarning("Instance #{InstanceId} has no circuit ID; cannot mark user authenticated", _instanceId);
+                return Task.CompletedTask;
             }
-            else
-            {
-                _logger.LogWarning("Instance #{InstanceId} - No circuit ID, cannot store token", _instanceId);
-            }
+            _tokenStore.SetToken(circuitId, token);
 
             // Parse claims and update local state.
             var claims = ParseClaimsFromJwt(token).ToList();
