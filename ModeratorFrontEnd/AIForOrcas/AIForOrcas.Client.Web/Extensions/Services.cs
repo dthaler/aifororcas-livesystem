@@ -23,9 +23,10 @@ public static class Services
         builder.Services.AddScoped<AuthenticationHeaderHandler>();
 
         // Register HTTP clients with handlers.
-        builder.Services.AddHttpClient("UnauthenticatedAPI", client =>
+        builder.Services.AddHttpClient("UnauthenticatedAPI", (sp, client) =>
         {
-            client.BaseAddress = new Uri("https://aifororcasdetectionsstaging-fqecdpbbe2gkbma3.westus2-01.azurewebsites.net/");
+            var apiUrl = sp.GetRequiredService<AppSettings>().APIUrl;
+            client.BaseAddress = new Uri(apiUrl);
         })
         .AddHttpMessageHandler<LoggingHandler>();
 
