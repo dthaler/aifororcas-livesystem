@@ -1,9 +1,4 @@
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 
 namespace AIForOrcas.Client.Web.Services;
 
@@ -11,6 +6,8 @@ public class AuthenticationHeaderHandler : DelegatingHandler
 {
     private readonly AuthenticationStateProvider _authProvider;
     private readonly ILogger<AuthenticationHeaderHandler> _logger;
+    private static int _instanceCount = 0;
+    private readonly int _instanceId;
 
     public AuthenticationHeaderHandler(
         AuthenticationStateProvider authProvider,
@@ -18,49 +15,47 @@ public class AuthenticationHeaderHandler : DelegatingHandler
     {
         _authProvider = authProvider;
         _logger = logger;
+        _instanceId = Interlocked.Increment(ref _instanceCount);
+        _logger.LogError("!!! [AuthHandler #{InstanceId}] CONSTRUCTED !!!", _instanceId);
     }
 
     protected override async Task<HttpResponseMessage> SendAsync(
         HttpRequestMessage request,
         CancellationToken cancellationToken)
     {
-        _logger.LogInformation("[AuthHandler] Processing {Method} request to {Uri}", 
-            request.Method, request.RequestUri);
+        _logger.LogError("!!! [AuthHandler #{InstanceId}] SendAsync CALLED for {Method} {Uri} !!!", 
+            _instanceId, request.Method, request.RequestUri);
 
-        try
+        var state = await _authProvider.GetAuthenticationStateAsync();
+        var user = state.User;
+
+        _logger.LogError("!!! [AuthHandler #{InstanceId}] User.Identity.IsAuthenticated = {IsAuth} !!!", 
+            _instanceId, user?.Identity?.IsAuthenticated ?? false);
+
+        if (user?.Identity?.IsAuthenticated == true)
         {
-            var state = await _authProvider.GetAuthenticationStateAsync();
-            var user = state.User;
-
-            if (user?.Identity?.IsAuthenticated == true)
+            var tokenClaim = user.FindFirst("authToken");
+            
+            if (tokenClaim != null && !string.IsNullOrWhiteSpace(tokenClaim.Value))
             {
-                // Extract token from claims
-                var tokenClaim = user.FindFirst("authToken");
-
-                if (tokenClaim != null && !string.IsNullOrWhiteSpace(tokenClaim.Value))
-                {
-                    request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", tokenClaim.Value);
-                    _logger.LogInformation("[AuthHandler] Authorization header added");
-                }
-                else
-                {
-                    _logger.LogWarning("[AuthHandler] User authenticated but no token claim found");
-                }
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", tokenClaim.Value);
+                _logger.LogError("!!! [AuthHandler #{InstanceId}] ✓ Authorization header ADDED !!!", _instanceId);
             }
             else
             {
-                _logger.LogInformation("[AuthHandler] User not authenticated - no auth header added");
+                _logger.LogError("!!! [AuthHandler #{InstanceId}] ✗ No token claim found !!!", _instanceId);
             }
         }
-        catch (Exception ex)
+        else
         {
-            _logger.LogError(ex, "[AuthHandler] Error retrieving authentication state");
+            _logger.LogError("!!! [AuthHandler #{InstanceId}] ✗ User not authenticated !!!", _instanceId);
         }
 
         var response = await base.SendAsync(request, cancellationToken);
-
-        _logger.LogInformation("[AuthHandler] Response: {StatusCode}", response.StatusCode);
-
+        
+        _logger.LogError("!!! [AuthHandler #{InstanceId}] Response: {StatusCode} !!!", 
+            _instanceId, response.StatusCode);
+        
         return response;
     }
 }

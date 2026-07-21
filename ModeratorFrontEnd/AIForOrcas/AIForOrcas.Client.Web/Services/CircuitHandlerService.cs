@@ -4,6 +4,13 @@ namespace AIForOrcas.Client.Web.Services;
 
 public class CircuitHandlerService : CircuitHandler
 {
+    private static int _instanceCount = 0;
+    private readonly int _instanceId;
+    public CircuitHandlerService()
+    {
+        _instanceId = Interlocked.Increment(ref _instanceCount);
+    }
+
     public string CircuitId { get; private set; }
 
     public override Task OnConnectionUpAsync(Circuit circuit, CancellationToken cancellationToken)

@@ -9,34 +9,29 @@ namespace AIForOrcas.Client.Web.Extensions
     public sealed class LoggingHandler : DelegatingHandler
     {
         private readonly ILogger<LoggingHandler> _logger;
+        private static int _instanceCount = 0;
+        private readonly int _instanceId;
 
         public LoggingHandler(ILogger<LoggingHandler> logger)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _logger.LogError("========== [LoggingHandler] INSTANCE CREATED ==========");
+            _instanceId = Interlocked.Increment(ref _instanceCount);
+            _logger.LogError("!!! [LoggingHandler #{InstanceId}] CONSTRUCTED !!!", _instanceId);
         }
 
         protected override async Task<HttpResponseMessage> SendAsync(
             HttpRequestMessage request,
             CancellationToken cancellationToken)
         {
-            try
-            {
-                _logger.LogError("========== [LoggingHandler] SEND ASYNC STARTED ==========");
-                _logger.LogError("[LoggingHandler] {Method} {Uri}", request.Method, request.RequestUri);
-                
-                var response = await base.SendAsync(request, cancellationToken);
-                
-                _logger.LogError("[LoggingHandler] Response: {Status}", response.StatusCode);
-                _logger.LogError("========== [LoggingHandler] SEND ASYNC COMPLETED ==========");
-                
-                return response;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "[LoggingHandler] EXCEPTION in SendAsync");
-                throw;
-            }
+            _logger.LogError("!!! [LoggingHandler #{InstanceId}] SendAsync CALLED for {Method} {Uri} !!!",
+                _instanceId, request.Method, request.RequestUri);
+
+            var response = await base.SendAsync(request, cancellationToken);
+
+            _logger.LogError("!!! [LoggingHandler #{InstanceId}] Response {StatusCode} !!!",
+                _instanceId, response.StatusCode);
+
+            return response;
         }
     }
 }

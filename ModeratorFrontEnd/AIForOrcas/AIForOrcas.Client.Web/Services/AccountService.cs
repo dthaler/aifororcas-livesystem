@@ -24,7 +24,7 @@ public class AccountService : IAccountService
         _logger = logger;
     }
 
-    public async Task<string> GetToken()
+    public string GetToken()
     {
         if (_authenticationStateProvider is ApiAuthenticationStateProvider apiProvider)
         {

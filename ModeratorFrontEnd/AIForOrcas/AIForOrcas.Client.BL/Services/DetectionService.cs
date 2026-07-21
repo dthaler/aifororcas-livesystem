@@ -13,22 +13,22 @@ namespace AIForOrcas.Client.BL.Services
 	{
 		private string api = "api/detections";
 		private JsonSerializerOptions defaultJsonSerializerOptions => new JsonSerializerOptions() { PropertyNameCaseInsensitive = true };
-        private readonly HttpClient _unauthenticated;
-        private readonly HttpClient _authenticated;
+		private readonly IHttpClientFactory _httpClientFactory;
 
-        public DetectionService(HttpClient unauthenticated, HttpClient authenticated)
-        {
-            _unauthenticated = unauthenticated;
-            _authenticated = authenticated;
-        }
+		public DetectionService(IHttpClientFactory httpClientFactory)
+		{
+			_httpClientFactory = httpClientFactory;
+		}
 
-        // Get detections based on passed view, pagination options, and filter options
-        private async Task<PaginatedResponseDTO<List<Detection>>> GetDetectionsAsync(string viewName, PaginationOptionsDTO paginationOptions, IFilterOptions filterOptions)
+		// Get detections based on passed view, pagination options, and filter options
+		private async Task<PaginatedResponseDTO<List<Detection>>> GetDetectionsAsync(string viewName, PaginationOptionsDTO paginationOptions, IFilterOptions filterOptions)
 		{
 			var prefix = api.Contains("?") ? $"{api}/{viewName}&" : $"{api}/{viewName}?";
 			var url = $"{prefix}{paginationOptions.QueryString}&{filterOptions.QueryString}";
 
-			var httpResponseMessage = await _unauthenticated.GetAsync(url);
+			// Create client on-demand from the current scope
+			var httpClient = _httpClientFactory.CreateClient("UnauthenticatedAPI");
+			var httpResponseMessage = await httpClient.GetAsync(url);
 
 			if (httpResponseMessage.IsSuccessStatusCode)
 			{
@@ -78,23 +78,27 @@ namespace AIForOrcas.Client.BL.Services
 			var dataJson = JsonSerializer.Serialize(request);
 			var stringContent = new StringContent(dataJson, Encoding.UTF8, "application/json");
 
-			var httpResponseMessage = await _authenticated.PutAsync(url, stringContent);
+			// Create client on-demand from the current scope
+			var httpClient = _httpClientFactory.CreateClient("AuthenticatedAPI");
+			var httpResponseMessage = await httpClient.PutAsync(url, stringContent);
 
-            if (!httpResponseMessage.IsSuccessStatusCode)
-            {
-                var errorContent = await httpResponseMessage.Content.ReadAsStringAsync();
-                var statusCode = (int)httpResponseMessage.StatusCode;
+			if (!httpResponseMessage.IsSuccessStatusCode)
+			{
+				var errorContent = await httpResponseMessage.Content.ReadAsStringAsync();
+				var statusCode = (int)httpResponseMessage.StatusCode;
 
-                throw new HttpRequestException(
-                    $"Failed to update detection. Status: {statusCode} {httpResponseMessage.ReasonPhrase}. Details: {errorContent}");
-            }
-        }
+				throw new HttpRequestException(
+					$"Failed to update detection. Status: {statusCode} {httpResponseMessage.ReasonPhrase}. Details: {errorContent}");
+			}
+		}
 
 		public async Task<Detection> GetDetectionAsync(string id)
 		{
 			var url = $"{api}/{id}";
 
-			var httpResponseMessage = await _unauthenticated.GetAsync(url);
+			// Create client on-demand from the current scope
+			var httpClient = _httpClientFactory.CreateClient("UnauthenticatedAPI");
+			var httpResponseMessage = await httpClient.GetAsync(url);
 
 			if (httpResponseMessage.IsSuccessStatusCode)
 			{

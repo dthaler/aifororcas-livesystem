@@ -1,7 +1,4 @@
-﻿using System.Security.Claims;
-using System.Text.Json;
-using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 
 namespace AIForOrcas.Client.Web.Services;
 
@@ -11,6 +8,9 @@ public class ApiAuthenticationStateProvider : AuthenticationStateProvider
     private readonly CircuitHandlerService _circuitHandler;
     private readonly ILogger<ApiAuthenticationStateProvider> _logger;
     private ClaimsPrincipal _currentUser = new ClaimsPrincipal(new ClaimsIdentity());
+    
+    private static int _instanceCount = 0;
+    private readonly int _instanceId;
 
     public ApiAuthenticationStateProvider(
         ITokenStore tokenStore,
@@ -20,15 +20,53 @@ public class ApiAuthenticationStateProvider : AuthenticationStateProvider
         _tokenStore = tokenStore;
         _circuitHandler = circuitHandler;
         _logger = logger;
+        
+        _instanceId = Interlocked.Increment(ref _instanceCount);
+        _logger.LogError("!!! ApiAuthenticationStateProvider Instance #{InstanceId} CREATED !!!", _instanceId);
     }
 
     public override Task<AuthenticationState> GetAuthenticationStateAsync()
     {
+        _logger.LogError("!!! GetAuthenticationStateAsync called on Instance #{InstanceId} !!!", _instanceId);
+        
+        var circuitId = _circuitHandler.CircuitId;
+        if (!string.IsNullOrWhiteSpace(circuitId))
+        {
+            var token = _tokenStore.GetToken(circuitId);
+            if (!string.IsNullOrWhiteSpace(token))
+            {
+                // Reconstruct user from token.
+                try
+                {
+                    var claims = ParseClaimsFromJwt(token).ToList();
+                    claims.Add(new Claim("authToken", token));
+                    _currentUser = new ClaimsPrincipal(new ClaimsIdentity(claims, "jwt"));
+                    
+                    _logger.LogError("!!! Instance #{InstanceId} - User authenticated from token store !!!", _instanceId);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error parsing token from store");
+                }
+            }
+            else
+            {
+                _currentUser = new ClaimsPrincipal(new ClaimsIdentity());
+                _logger.LogError("!!! Instance #{InstanceId} - No token in store !!!", _instanceId);
+            }
+        }
+        else
+        {
+            _logger.LogError("!!! Instance #{InstanceId} - No circuit ID available !!!", _instanceId);
+        }
+        
         return Task.FromResult(new AuthenticationState(_currentUser));
     }
 
     public Task MarkUserAsAuthenticated(string token)
     {
+        _logger.LogError("!!! MarkUserAsAuthenticated called on Instance #{InstanceId} !!!", _instanceId);
+        
         if (string.IsNullOrWhiteSpace(token))
         {
             _logger.LogWarning("Attempted to mark user as authenticated with empty token");
@@ -37,23 +75,30 @@ public class ApiAuthenticationStateProvider : AuthenticationStateProvider
 
         try
         {
-            // Store token in server-side store
+            // Store token in server-side store (SINGLETON - shared across instances)
             var circuitId = _circuitHandler.CircuitId;
             if (!string.IsNullOrWhiteSpace(circuitId))
             {
                 _tokenStore.SetToken(circuitId, token);
+                _logger.LogError("!!! Instance #{InstanceId} - Token stored with circuit ID: {CircuitId} !!!", 
+                    _instanceId, circuitId);
+            }
+            else
+            {
+                _logger.LogError("!!! Instance #{InstanceId} - WARNING: No circuit ID, cannot store token !!!", _instanceId);
             }
 
-            // Parse claims from JWT
+            // Parse claims and update local state.
             var claims = ParseClaimsFromJwt(token).ToList();
-            
-            // Add the token as a claim so the handler can access it
             claims.Add(new Claim("authToken", token));
             
             _currentUser = new ClaimsPrincipal(new ClaimsIdentity(claims, "jwt"));
             
-            var authState = Task.FromResult(new AuthenticationState(_currentUser));
-            NotifyAuthenticationStateChanged(authState);
+            _logger.LogError("!!! Instance #{InstanceId} - _currentUser.IsAuthenticated = {IsAuth} !!!", 
+                _instanceId, _currentUser.Identity?.IsAuthenticated ?? false);
+            
+            // Notify authentication state changed.
+            NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(_currentUser)));
             
             _logger.LogInformation("User authenticated successfully");
         }
@@ -67,6 +112,8 @@ public class ApiAuthenticationStateProvider : AuthenticationStateProvider
 
     public void MarkUserAsLoggedOut()
     {
+        _logger.LogError("!!! MarkUserAsLoggedOut called on Instance #{InstanceId} !!!", _instanceId);
+        
         var circuitId = _circuitHandler.CircuitId;
         if (!string.IsNullOrWhiteSpace(circuitId))
         {
@@ -75,8 +122,7 @@ public class ApiAuthenticationStateProvider : AuthenticationStateProvider
 
         _currentUser = new ClaimsPrincipal(new ClaimsIdentity());
         
-        var authState = Task.FromResult(new AuthenticationState(_currentUser));
-        NotifyAuthenticationStateChanged(authState);
+        NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(_currentUser)));
         
         _logger.LogInformation("User logged out");
     }
@@ -104,7 +150,7 @@ public class ApiAuthenticationStateProvider : AuthenticationStateProvider
 
             if (keyValuePairs == null) return claims;
 
-            // Handle groups
+            // Handle groups.
             if (keyValuePairs.TryGetValue("groups", out object groups) && groups != null)
             {
                 if (groups.ToString().Trim().StartsWith("["))
@@ -125,7 +171,7 @@ public class ApiAuthenticationStateProvider : AuthenticationStateProvider
                 keyValuePairs.Remove("groups");
             }
 
-            // Handle roles
+            // Handle roles.
             if (keyValuePairs.TryGetValue(ClaimTypes.Role, out object roles) && roles != null)
             {
                 if (roles.ToString().Trim().StartsWith("["))

@@ -13,44 +13,39 @@ public static class Services
         builder.Services.AddScoped<CircuitHandlerService>();
         builder.Services.AddScoped<CircuitHandler>(sp => sp.GetRequiredService<CircuitHandlerService>());
 
-        // Register authentication provider
+        // Register authentication provider.
         builder.Services.AddScoped<ApiAuthenticationStateProvider>();
         builder.Services.AddScoped<AuthenticationStateProvider>(sp =>
             sp.GetRequiredService<ApiAuthenticationStateProvider>());
 
-        // Register handlers
-        builder.Services.AddTransient<LoggingHandler>();
-        builder.Services.AddTransient<AuthenticationHeaderHandler>();
+        // Register handlers as SCOPED (not Transient) to match their dependencies
+        builder.Services.AddScoped<LoggingHandler>();
+        builder.Services.AddScoped<AuthenticationHeaderHandler>();
 
-        // Register HTTP clients with handlers
+        // Register HTTP clients with handlers.
         builder.Services.AddHttpClient("UnauthenticatedAPI", client =>
         {
             client.BaseAddress = new Uri("https://aifororcasdetectionsstaging-fqecdpbbe2gkbma3.westus2-01.azurewebsites.net/");
-        }).AddHttpMessageHandler<LoggingHandler>();
+        })
+        .AddHttpMessageHandler<LoggingHandler>();
 
         builder.Services.AddHttpClient("AuthenticatedAPI", client =>
         {
             client.BaseAddress = new Uri("https://aifororcasdetectionsstaging-fqecdpbbe2gkbma3.westus2-01.azurewebsites.net/");
         })
-            .AddHttpMessageHandler<AuthenticationHeaderHandler>()
-            .AddHttpMessageHandler<LoggingHandler>();
+        .AddHttpMessageHandler<AuthenticationHeaderHandler>()
+        .AddHttpMessageHandler<LoggingHandler>();
 
-        // Register DetectionService
-        builder.Services.AddTransient<IDetectionService>(sp =>
-        {
-            var factory = sp.GetRequiredService<IHttpClientFactory>();
-            return new DetectionService(
-                factory.CreateClient("UnauthenticatedAPI"),
-                factory.CreateClient("AuthenticatedAPI"));
-        });
+        // Remove the old factory registration and use this instead:
+        builder.Services.AddScoped<IDetectionService, DetectionService>();
 
-        builder.Services.AddTransient<IMetricsService, MetricsService>();
-        builder.Services.AddTransient<ITagService, TagService>();
-        builder.Services.AddTransient<IAccountService, AccountService>();
+        builder.Services.AddScoped<IMetricsService, MetricsService>();
+        builder.Services.AddScoped<ITagService, TagService>();
+        builder.Services.AddScoped<IAccountService, AccountService>();
     }
 
     public static void ConfigureWebServices(this WebApplicationBuilder builder, AppSettings appSettings)
     {
-        // Remove HttpClient registration - no longer needed
+        // Removed - no longer needed
     }
 }
