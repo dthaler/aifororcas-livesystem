@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Components.Server.Circuits;
+﻿using AIForOrcas.Client.BL.Services;
+using Microsoft.AspNetCore.Components.Server.Circuits;
 
 namespace AIForOrcas.Client.Web.Extensions;
 
@@ -18,9 +19,10 @@ public static class Services
         builder.Services.AddScoped<AuthenticationStateProvider>(sp =>
             sp.GetRequiredService<ApiAuthenticationStateProvider>());
 
-        // Register handlers as SCOPED (not Transient) to match their dependencies
+        // Register the scoped token provider that resolves the token from the active circuit.
+        builder.Services.AddScoped<IAuthTokenProvider, CircuitAuthTokenProvider>();
+
         builder.Services.AddScoped<LoggingHandler>();
-        builder.Services.AddScoped<AuthenticationHeaderHandler>();
 
         // Register HTTP clients with handlers.
         builder.Services.AddHttpClient("UnauthenticatedAPI", (sp, client) =>
@@ -35,10 +37,8 @@ public static class Services
             var apiUrl = sp.GetRequiredService<AppSettings>().APIUrl;
             client.BaseAddress = new Uri(apiUrl);
         })
-        .AddHttpMessageHandler<AuthenticationHeaderHandler>()
         .AddHttpMessageHandler<LoggingHandler>();
 
-        // Remove the old factory registration and use this instead:
         builder.Services.AddScoped<IDetectionService, DetectionService>();
 
         builder.Services.AddScoped<IMetricsService, MetricsService>();

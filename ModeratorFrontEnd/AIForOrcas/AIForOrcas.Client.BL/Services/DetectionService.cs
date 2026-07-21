@@ -14,10 +14,12 @@ namespace AIForOrcas.Client.BL.Services
 		private string api = "api/detections";
 		private JsonSerializerOptions defaultJsonSerializerOptions => new JsonSerializerOptions() { PropertyNameCaseInsensitive = true };
 		private readonly IHttpClientFactory _httpClientFactory;
+		private readonly IAuthTokenProvider _authTokenProvider;
 
-		public DetectionService(IHttpClientFactory httpClientFactory)
+		public DetectionService(IHttpClientFactory httpClientFactory, IAuthTokenProvider authTokenProvider)
 		{
 			_httpClientFactory = httpClientFactory;
+			_authTokenProvider = authTokenProvider;
 		}
 
 		// Get detections based on passed view, pagination options, and filter options
@@ -78,9 +80,14 @@ namespace AIForOrcas.Client.BL.Services
 			var dataJson = JsonSerializer.Serialize(request);
 			var stringContent = new StringContent(dataJson, Encoding.UTF8, "application/json");
 
-			// Create client on-demand from the current scope.
 			var httpClient = _httpClientFactory.CreateClient("AuthenticatedAPI");
-			var httpResponseMessage = await httpClient.PutAsync(url, stringContent);
+			var httpRequest = new HttpRequestMessage(HttpMethod.Put, url) { Content = stringContent };
+
+			var token = _authTokenProvider.GetToken();
+			if (!string.IsNullOrWhiteSpace(token))
+				httpRequest.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+			var httpResponseMessage = await httpClient.SendAsync(httpRequest);
 
 			if (!httpResponseMessage.IsSuccessStatusCode)
 			{
