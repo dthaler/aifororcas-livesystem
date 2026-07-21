@@ -28,7 +28,7 @@ namespace AIForOrcas.Client.BL.Services
 			var prefix = api.Contains("?") ? $"{api}/{viewName}&" : $"{api}/{viewName}?";
 			var url = $"{prefix}{paginationOptions.QueryString}&{filterOptions.QueryString}";
 
-			// Create client on-demand from the current scope
+			// Create client on-demand from the current scope.
 			var httpClient = _httpClientFactory.CreateClient("UnauthenticatedAPI");
 			var httpResponseMessage = await httpClient.GetAsync(url);
 
@@ -101,7 +101,7 @@ namespace AIForOrcas.Client.BL.Services
 		{
 			var url = $"{api}/{id}";
 
-			// Create client on-demand from the current scope
+			// Create client on-demand from the current scope.
 			var httpClient = _httpClientFactory.CreateClient("UnauthenticatedAPI");
 			var httpResponseMessage = await httpClient.GetAsync(url);
 

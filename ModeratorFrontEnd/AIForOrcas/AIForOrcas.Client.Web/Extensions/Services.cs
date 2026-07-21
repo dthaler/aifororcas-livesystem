@@ -7,10 +7,10 @@ public static class Services
 {
     public static void ConfigureDataServices(this WebApplicationBuilder builder)
     {
-        // Register server-side token store as singleton
+        // Register server-side token store as singleton.
         builder.Services.AddSingleton<ITokenStore, ServerSideTokenStore>();
         
-        // Register circuit handler
+        // Register circuit handler.
         builder.Services.AddScoped<CircuitHandlerService>();
         builder.Services.AddScoped<CircuitHandler>(sp => sp.GetRequiredService<CircuitHandlerService>());
 
@@ -44,10 +44,5 @@ public static class Services
         builder.Services.AddScoped<IMetricsService, MetricsService>();
         builder.Services.AddScoped<ITagService, TagService>();
         builder.Services.AddScoped<IAccountService, AccountService>();
-    }
-
-    public static void ConfigureWebServices(this WebApplicationBuilder builder, AppSettings appSettings)
-    {
-        // Removed - no longer needed
     }
 }
