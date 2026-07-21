@@ -27,11 +27,11 @@ public class AuthenticationHeaderHandler : DelegatingHandler
         HttpRequestMessage request,
         CancellationToken cancellationToken)
     {
-        _logger.LogError("Handler #{InstanceId} using CircuitId: {CircuitId}", _instanceId, _circuit.CircuitId);
+        var circuitId = _circuit.CircuitId;
+        if (string.IsNullOrWhiteSpace(circuitId))
+            _logger.LogWarning("Handler #{InstanceId} has no CircuitId; sending request without Authorization header", _instanceId);
 
-        var token = _tokenStore.GetToken(_circuit.CircuitId);
-
-        _logger.LogError("Handler #{InstanceId} token: {Token}", _instanceId, token);
+        var token = !string.IsNullOrWhiteSpace(circuitId) ? _tokenStore.GetToken(circuitId) : null;
 
         if (!string.IsNullOrWhiteSpace(token))
         {
