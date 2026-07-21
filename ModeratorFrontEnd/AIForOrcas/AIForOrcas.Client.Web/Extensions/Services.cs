@@ -29,9 +29,10 @@ public static class Services
         })
         .AddHttpMessageHandler<LoggingHandler>();
 
-        builder.Services.AddHttpClient("AuthenticatedAPI", client =>
+        builder.Services.AddHttpClient("AuthenticatedAPI", (sp, client) =>
         {
-            client.BaseAddress = new Uri("https://aifororcasdetectionsstaging-fqecdpbbe2gkbma3.westus2-01.azurewebsites.net/");
+            var apiUrl = sp.GetRequiredService<AppSettings>().APIUrl;
+            client.BaseAddress = new Uri(apiUrl);
         })
         .AddHttpMessageHandler<AuthenticationHeaderHandler>()
         .AddHttpMessageHandler<LoggingHandler>();
