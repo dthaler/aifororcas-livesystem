@@ -39,7 +39,6 @@ public class ApiAuthenticationStateProvider : AuthenticationStateProvider
                 try
                 {
                     var claims = ParseClaimsFromJwt(token).ToList();
-                    claims.Add(new Claim("authToken", token));
                     _currentUser = new ClaimsPrincipal(new ClaimsIdentity(claims, "jwt"));
                     
                     _logger.LogDebug("Instance #{InstanceId} - User authenticated from token store", _instanceId);
@@ -87,7 +86,6 @@ public class ApiAuthenticationStateProvider : AuthenticationStateProvider
 
             // Parse claims and update local state.
             var claims = ParseClaimsFromJwt(token).ToList();
-            claims.Add(new Claim("authToken", token));
             
             _currentUser = new ClaimsPrincipal(new ClaimsIdentity(claims, "jwt"));
             
