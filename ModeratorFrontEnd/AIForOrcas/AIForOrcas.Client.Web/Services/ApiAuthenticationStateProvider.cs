@@ -57,7 +57,8 @@ public class ApiAuthenticationStateProvider : AuthenticationStateProvider
         }
         else
         {
-            _logger.LogError("!!! Instance #{InstanceId} - No circuit ID available !!!", _instanceId);
+            _currentUser = new ClaimsPrincipal(new ClaimsIdentity());
+            _logger.LogWarning("Instance #{InstanceId} has no circuit ID; treating user as anonymous", _instanceId);
         }
         
         return Task.FromResult(new AuthenticationState(_currentUser));
