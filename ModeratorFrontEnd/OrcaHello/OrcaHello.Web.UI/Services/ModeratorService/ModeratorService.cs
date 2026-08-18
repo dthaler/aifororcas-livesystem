@@ -38,8 +38,8 @@
         /// <exception cref="NullModeratorResponseException">If the response from the API is null.</exception>
         public ValueTask<CommentListForModeratorResponse> GetFilteredPositiveCommentsForModeratorAsync(string moderator,
         DateTime? fromDate, DateTime? toDate, int page, int pageSize) =>
-        TryCatch(async () => {
-
+        TryCatch(async () =>
+        {
             Validate(moderator, nameof(moderator));
             ValidateDateRange(fromDate, toDate);
             ValidatePagination(page, pageSize);
@@ -69,8 +69,8 @@
         /// <exception cref="NullModeratorResponseException">If the response from the API is null.</exception>
         public ValueTask<CommentListForModeratorResponse> GetFilteredNegativeAndUknownCommentsForModeratorAsync(string moderator,
            DateTime? fromDate, DateTime? toDate, int page, int pageSize) =>
-        TryCatch(async () => {
-
+        TryCatch(async () =>
+        {
             Validate(moderator, nameof(moderator));
             ValidateDateRange(fromDate, toDate);
             ValidatePagination(page, pageSize);
@@ -97,15 +97,15 @@
         /// <exception cref="NullModeratorResponseException">If the response from the API is null.</exception>
         public ValueTask<TagListForModeratorResponse> GetFilteredTagsForModeratorAsync(string moderator,
            DateTime? fromDate, DateTime? toDate) =>
-        TryCatch(async () => {
-
+        TryCatch(async () =>
+        {
             Validate(moderator, nameof(moderator));
             ValidateDateRange(fromDate, toDate);
 
             var queryString = $"fromDate={fromDate.GetValueOrDefault()}&toDate={toDate.GetValueOrDefault()}";
 
-             TagListForModeratorResponse response = await _apiBroker
-                .GetFilteredTagsForModeratorAsync(moderator, queryString);
+            TagListForModeratorResponse response = await _apiBroker
+               .GetFilteredTagsForModeratorAsync(moderator, queryString);
 
             ValidateResponse(response);
 
@@ -126,7 +126,8 @@
         /// <exception cref="NullModeratorResponseException">If the response from the API is null.</exception>
         public ValueTask<DetectionListForModeratorAndTagResponse> GetFilteredDetectionsForTagAndModeratorAsync(string moderator, string tag,
             DateTime? fromDate, DateTime? toDate, int page, int pageSize) =>
-        TryCatch(async () => {
+        TryCatch(async () =>
+        {
             Validate(tag, nameof(tag));
             Validate(moderator, nameof(moderator));
             ValidateDateRange(fromDate, toDate);
@@ -153,8 +154,8 @@
         /// <exception cref="NullModeratorResponseException">If the response from the API is null.</exception>
         public ValueTask<MetricsForModeratorResponse> GetFilteredMetricsForModeratorAsync(string moderator,
            DateTime? fromDate, DateTime? toDate) =>
-        TryCatch(async () => {
-
+        TryCatch(async () =>
+        {
             Validate(moderator, nameof(moderator));
             ValidateDateRange(fromDate, toDate);
 
