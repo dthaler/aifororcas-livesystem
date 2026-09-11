@@ -26,6 +26,9 @@ The diagram below describes the flow of data through OrcaHello and the technolog
 flowchart LR
 classDef subgraphTitle font-size:40px,font-weight:bold;
 classDef nodeTitle font-size:40px;
+classDef azureNode fill:azure,stroke:#0088aa,stroke-width:2px,font-size:40px;
+classDef awsNode fill:pink,stroke:#0088aa,stroke-width:2px,font-size:40px;
+classDef herokuNode fill:lightgreen,stroke:#0088aa,stroke-width:2px,font-size:40px;
 
 RPI["🎤 RaspberryPI"]
 style RPI fill:transparent,stroke:transparent;
@@ -50,57 +53,57 @@ class PSUB nodeTitle;
 
 subgraph AWS["Hydrophone Sound Stream"]
     S3[("AWS S3")]
-    class S3 nodeTitle;
+    class S3 awsNode;
 end
 class AWS subgraphTitle;
    
 subgraph IS["OrcaHello Inference System"]
     OH["OrcaHello App"]
-    class OH nodeTitle;
+    class OH azureNode;
     OHMODEL["OrcaHello Model"]
-    class OHMODEL nodeTitle;
+    class OHMODEL azureNode;
     PA["PODS-AI App"]
-    class PA nodeTitle;
+    class PA azureNode;
     PAMODEL["PODS-AI Model"]
-    class PAMODEL nodeTitle;
+    class PAMODEL azureNode;
     OHDB[("Machine Detection Metadata Store")]
-    class OHDB nodeTitle;
+    class OHDB azureNode;
 end
 class IS subgraphTitle;
 
 subgraph OSNET["Orcasite"]
     LIVE["live.orcasound.net"]
-    class LIVE nodeTitle;
+    class LIVE herokuNode;
     FLIST[("Feeds")]
-    class FLIST nodeTitle;
+    class FLIST herokuNode;
     OSDB[("Detection Metadata Store")]
-    class OSDB nodeTitle;
+    class OSDB herokuNode;
     PSLIST[("Public Subscriber List")]
-    class PSLIST nodeTitle;
+    class PSLIST herokuNode;
     OSMLIST[("Orcasite Moderator List")]
-    class OSMLIST nodeTitle;
+    class OSMLIST herokuNode;
 end
 class OSNET subgraphTitle;
 
 subgraph NS["Notification Systems"]
     PROXY["PostToOrcasite"]
-    class PROXY nodeTitle;
+    class PROXY azureNode;
     OHMLIST[("Moderators")]
-    class OHMLIST nodeTitle;
+    class OHMLIST azureNode;
     MNF["Moderator Function"]
-    class MNF nodeTitle;
+    class MNF azureNode;
     CSLIST[("Curated Subscribers")]
-    class CSLIST nodeTitle;
+    class CSLIST azureNode;
     SNF["Subscriber Function"]
-    class SNF nodeTitle;
+    class SNF azureNode;
 end
 class NS subgraphTitle;
     
 subgraph MS["Moderator System"]
     OHMUI["OrcaHello Moderator UI"]
-    class OHMUI nodeTitle;
+    class OHMUI azureNode;
     OSMUI["Orcasite Moderator UI"]
-    class OSMUI nodeTitle;
+    class OSMUI herokuNode;
 end
 class MS subgraphTitle;
 
@@ -145,6 +148,16 @@ CSUB -->|Subscribe via admin| CSLIST
 OHDB -->|Positive detections| SNF
 CSLIST --> SNF
 SNF -->|✉️ Notify| CSUB
+
+subgraph LEGEND["Legend"]
+    L1["Azure"]
+    class L1 azureNode;
+    L2["Heroku"]
+    class L2 herokuNode;
+    L3["AWS"]
+    class L3 awsNode;
+end
+class LEGEND subgraphTitle;
 ```
 
 ![System Overview](Docs/Images/SystemOverview.png)
