@@ -24,62 +24,85 @@ The diagram below describes the flow of data through OrcaHello and the technolog
 
 ```mermaid
 flowchart LR
-classDef bigTitle font-size:20px,font-weight:bold;
+classDef subgraphTitle font-size:40px,font-weight:bold;
+classDef nodeTitle font-size:40px;
 
 RPI["🎤 RaspberryPI"]
 style RPI fill:transparent,stroke:transparent;
+class RPI nodeTitle;
 
 subgraph MOD[" "]
    OHMOD["🧑 OrcaHello Moderator"]
+   class OHMOD nodeTitle;
    style OHMOD fill:transparent,stroke:transparent;
    OSMOD["🧑 Orcasite Moderator"]
    style OSMOD fill:transparent,stroke:transparent;
+   class OSMOD nodeTitle;
 end
 style MOD fill:transparent,stroke:transparent;
 
 CSUB["🚢⛴️🚤🛳️ Curated Subscribers"]
 style CSUB fill:transparent,stroke:transparent;
+class CSUB nodeTitle;
 PSUB["👥 Public Listeners"]
 style PSUB fill:transparent,stroke:transparent;
+class PSUB nodeTitle;
 
 subgraph AWS["Hydrophone Sound Stream"]
     S3[("AWS S3")]
+    class S3 nodeTitle;
 end
-class AWS bigTitle;
-
+class AWS subgraphTitle;
    
 subgraph IS["OrcaHello Inference System"]
     OH["OrcaHello App"]
+    class OH nodeTitle;
     OHMODEL["OrcaHello Model"]
+    class OHMODEL nodeTitle;
     PA["PODS-AI App"]
+    class PA nodeTitle;
     PAMODEL["PODS-AI Model"]
+    class PAMODEL nodeTitle;
     OHDB[("Machine Detection Metadata Store")]
+    class OHDB nodeTitle;
 end
-class IS bigTitle;
+class IS subgraphTitle;
 
 subgraph OSNET["Orcasite"]
     LIVE["live.orcasound.net"]
+    class LIVE nodeTitle;
     FLIST[("Feeds")]
+    class FLIST nodeTitle;
     OSDB[("Detection Metadata Store")]
+    class OSDB nodeTitle;
     PSLIST[("Public Subscriber List")]
+    class PSLIST nodeTitle;
     OSMLIST[("Orcasite Moderator List")]
+    class OSMLIST nodeTitle;
 end
-class OSNET bigTitle;
+class OSNET subgraphTitle;
 
 subgraph NS["Notification Systems"]
     PROXY["PostToOrcasite"]
+    class PROXY nodeTitle;
     OHMLIST[("Moderators")]
+    class OHMLIST nodeTitle;
     MNF["Moderator Function"]
+    class MNF nodeTitle;
     CSLIST[("Curated Subscribers")]
+    class CSLIST nodeTitle;
     SNF["Subscriber Function"]
+    class SNF nodeTitle;
 end
-class NS bigTitle;
+class NS subgraphTitle;
     
 subgraph MS["Moderator System"]
     OHMUI["OrcaHello Moderator UI"]
+    class OHMUI nodeTitle;
     OSMUI["Orcasite Moderator UI"]
+    class OSMUI nodeTitle;
 end
-class MS bigTitle;
+class MS subgraphTitle;
 
 RPI -->|10 sec audio samples| S3
 
