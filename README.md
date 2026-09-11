@@ -22,6 +22,125 @@ This repository contains the implementations for the following components that m
 ## System overview
 The diagram below describes the flow of data through OrcaHello and the technologies used. 
 
+```mermaid
+flowchart TB
+classDef bigTitle font-size:20px,font-weight:bold;
+
+RPI["🎤 RaspberryPI"]
+style RPI fill:transparent,stroke:transparent;
+OHMOD["🧑 OrcaHello Moderator"]
+style OHMOD fill:transparent,stroke:transparent;
+OSMOD["🧑 Orcasite Moderator"]
+style OSMOD fill:transparent,stroke:transparent;
+CSUB["🚢⛴️🚤🛳️ Curated Subscribers"]
+style CSUB fill:transparent,stroke:transparent;
+PSUB["👥 Public Listeners"]
+style PSUB fill:transparent,stroke:transparent;
+
+subgraph AWS["Hydrophone Sound Stream"]
+    S3[("AWS S3")]
+end
+class AWS bigTitle;
+
+subgraph OSNET["Orcasite Listener Portal"]
+    LIVE["live.orcasound.net"]
+end
+class OSNET bigTitle;
+    
+subgraph IS["OrcaHello Inference System"]
+    OH["OrcaHello App"]
+    OHMODEL["OrcaHello Model"]
+    PA["PODS-AI App"]
+    PAMODEL["PODS-AI Model"]
+    IS_FOOTER["Azure Kubernetes Service"]
+    style IS_FOOTER fill:transparent,stroke:transparent;
+end
+class IS bigTitle;
+
+subgraph CDB["OrcaHello Database"]
+    OHDB[("Detection Metadata Store")]
+    OHDB_FOOTER["Azure Cosmos DB and Storage"]
+    style OHDB_FOOTER fill:transparent,stroke:transparent;
+end
+class CDB bigTitle;
+
+subgraph HDB["Orcasite Database"]
+    FLIST[("Feeds")]
+    OSDB[("Detection Metadata Store")]
+    PSLIST[("Public Subscriber List")]
+    OSMLIST[("Orcasite Moderator List")]
+    OSDB_FOOTER["Heroku Postgres Database"]
+    style OSDB_FOOTER fill:transparent,stroke:transparent;
+end
+class HDB bigTitle;
+
+subgraph NS["Notification system"]
+    PROXY["PostToOrcasite"]
+    OHMLIST[("Moderators")]
+    MNF["Moderator Function"]
+    CSLIST[("Curated Subscribers")]
+    SNF["Subscriber Function"]
+    NS_FOOTER["Azure Function Apps"]
+    style NS_FOOTER fill:transparent,stroke:transparent;
+end
+class NS bigTitle;
+    
+subgraph OHMS["OrcaHello Moderator System"]
+    OHMUI["Web UI"]
+    OHMS_FOOTER["Azure App Service"]
+    style OHMS_FOOTER fill:transparent,stroke:transparent;
+end
+class OHMS bigTitle;
+
+subgraph OSMS["Orcasite Moderator System"]
+    OSMUI["Web UI"]
+    OSMS_FOOTER["Heroku Service"]
+    style OSMS_FOOTER fill:transparent,stroke:transparent;
+end
+class OSMS bigTitle;
+
+RPI -->|10 sec audio samples| S3
+
+FLIST --> LIVE
+PSUB -->|Listen| LIVE
+LIVE -->|Report sound| OSDB
+LIVE -->|Subscribe| PSLIST
+LIVE -->|✉️ Notify| OSMOD
+OSMLIST --> LIVE
+OSMOD -->|Subscribe via admin| OSMLIST
+OSMOD -->|Assess candidates and update as appropriate| OSMUI
+OSMUI -->|Updated call markings| OSDB
+PSLIST --> OSMUI
+OSMUI -->|✉️ Notify| PSUB
+    
+S3 -->|1 min audio sample| OH
+S3 -->|1 min audio sample| PA
+    
+FLIST --> OH
+OH --> OHMODEL
+OHMODEL --> OH
+OH -->|Report candidate| OHDB
+
+PA --> PAMODEL
+PAMODEL --> PA
+PA -->|Report candidate| OHDB
+
+OHDB -->|New candidates| PROXY
+PROXY -->|New candidates| OSDB
+    
+OHMOD -->|Subscribe via admin| OHMLIST
+OHDB -->|New candidates| MNF
+OHMLIST --> MNF
+MNF -->|✉️ Notify expert of new sound data| OHMOD
+OHMOD -->|Assess candidates and update as appropriate| OHMUI
+OHMUI -->|Updated call markings| OHDB
+    
+CSUB -->|Subscribe via admin| CSLIST
+OHDB -->|Positive detections| SNF
+CSLIST --> SNF
+SNF -->|✉️ Notify| CSUB
+```
+
 ![System Overview](Docs/Images/SystemOverview.png)
 
 As of September, 2025, the data flow steps include:
