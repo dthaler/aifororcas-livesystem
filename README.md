@@ -54,8 +54,6 @@ subgraph IS["OrcaHello Inference System"]
     PA["PODS-AI App"]
     PAMODEL["PODS-AI Model"]
     OHDB[("Machine Detection Metadata Store")]
-    IS_FOOTER["Azure"]
-    style IS_FOOTER fill:transparent,stroke:transparent;
 end
 class IS bigTitle;
 
@@ -65,8 +63,6 @@ subgraph OSNET["Orcasite"]
     OSDB[("Detection Metadata Store")]
     PSLIST[("Public Subscriber List")]
     OSMLIST[("Orcasite Moderator List")]
-    OSDB_FOOTER["Heroku Postgres Database"]
-    style OSDB_FOOTER fill:transparent,stroke:transparent;
 end
 class OSNET bigTitle;
 
@@ -76,8 +72,6 @@ subgraph NS["Notification Systems"]
     MNF["Moderator Function"]
     CSLIST[("Curated Subscribers")]
     SNF["Subscriber Function"]
-    NS_FOOTER["Azure Function Apps"]
-    style NS_FOOTER fill:transparent,stroke:transparent;
 end
 class NS bigTitle;
     
