@@ -23,7 +23,7 @@ This repository contains the implementations for the following components that m
 The diagram below describes the flow of data through OrcaHello and the technologies used. 
 
 ```mermaid
-flowchart TB
+flowchart LR
 classDef bigTitle font-size:20px,font-weight:bold;
 
 RPI["🎤 RaspberryPI"]
