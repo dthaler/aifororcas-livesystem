@@ -169,8 +169,6 @@ end
 class LEGEND subgraphTitle;
 ```
 
-![System Overview](Docs/Images/SystemOverview.png)
-
 As of September, 2025, the data flow steps include:
 1. **Live streaming of audio data via AWS** (from Raspberry Pis running [orcanode code](https://github.com/orcasound/orcanode) to [Orcaound's S3 open data registry buckets](https://registry.opendata.aws/orcasound/))
 2. **Azure-based analysis** (via AKS in 2021-2, ICI 2019-2020; ingestion of 10-second segments from S3, inference on 2-second samples using the current OrcaHello binary call classifier, concatenation of raw audio into 60-second WAV files and spectrogram generation) 
