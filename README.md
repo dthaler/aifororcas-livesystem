@@ -28,10 +28,15 @@ classDef bigTitle font-size:20px,font-weight:bold;
 
 RPI["🎤 RaspberryPI"]
 style RPI fill:transparent,stroke:transparent;
-OHMOD["🧑 OrcaHello Moderator"]
-style OHMOD fill:transparent,stroke:transparent;
-OSMOD["🧑 Orcasite Moderator"]
-style OSMOD fill:transparent,stroke:transparent;
+
+subgraph MOD[" "]
+   OHMOD["🧑 OrcaHello Moderator"]
+   style OHMOD fill:transparent,stroke:transparent;
+   OSMOD["🧑 Orcasite Moderator"]
+   style OSMOD fill:transparent,stroke:transparent;
+end
+style MOD fill:transparent,stroke:transparent;
+
 CSUB["🚢⛴️🚤🛳️ Curated Subscribers"]
 style CSUB fill:transparent,stroke:transparent;
 PSUB["👥 Public Listeners"]
@@ -42,29 +47,20 @@ subgraph AWS["Hydrophone Sound Stream"]
 end
 class AWS bigTitle;
 
-subgraph OSNET["Orcasite Listener Portal"]
-    LIVE["live.orcasound.net"]
-end
-class OSNET bigTitle;
-    
+   
 subgraph IS["OrcaHello Inference System"]
     OH["OrcaHello App"]
     OHMODEL["OrcaHello Model"]
     PA["PODS-AI App"]
     PAMODEL["PODS-AI Model"]
-    IS_FOOTER["Azure Kubernetes Service"]
+    OHDB[("Machine Detection Metadata Store")]
+    IS_FOOTER["Azure"]
     style IS_FOOTER fill:transparent,stroke:transparent;
 end
 class IS bigTitle;
 
-subgraph CDB["OrcaHello Database"]
-    OHDB[("Detection Metadata Store")]
-    OHDB_FOOTER["Azure Cosmos DB and Storage"]
-    style OHDB_FOOTER fill:transparent,stroke:transparent;
-end
-class CDB bigTitle;
-
-subgraph HDB["Orcasite Database"]
+subgraph OSNET["Orcasite"]
+    LIVE["live.orcasound.net"]
     FLIST[("Feeds")]
     OSDB[("Detection Metadata Store")]
     PSLIST[("Public Subscriber List")]
@@ -72,9 +68,9 @@ subgraph HDB["Orcasite Database"]
     OSDB_FOOTER["Heroku Postgres Database"]
     style OSDB_FOOTER fill:transparent,stroke:transparent;
 end
-class HDB bigTitle;
+class OSNET bigTitle;
 
-subgraph NS["Notification system"]
+subgraph NS["Notification Systems"]
     PROXY["PostToOrcasite"]
     OHMLIST[("Moderators")]
     MNF["Moderator Function"]
@@ -85,19 +81,11 @@ subgraph NS["Notification system"]
 end
 class NS bigTitle;
     
-subgraph OHMS["OrcaHello Moderator System"]
-    OHMUI["Web UI"]
-    OHMS_FOOTER["Azure App Service"]
-    style OHMS_FOOTER fill:transparent,stroke:transparent;
+subgraph MS["Moderator System"]
+    OHMUI["OrcaHello Moderator UI"]
+    OSMUI["Orcasite Moderator UI"]
 end
-class OHMS bigTitle;
-
-subgraph OSMS["Orcasite Moderator System"]
-    OSMUI["Web UI"]
-    OSMS_FOOTER["Heroku Service"]
-    style OSMS_FOOTER fill:transparent,stroke:transparent;
-end
-class OSMS bigTitle;
+class MS bigTitle;
 
 RPI -->|10 sec audio samples| S3
 
@@ -113,6 +101,7 @@ OSMUI -->|Updated call markings| OSDB
 PSLIST --> OSMUI
 OSMUI -->|✉️ Notify| PSUB
     
+S3 --> LIVE
 S3 -->|1 min audio sample| OH
 S3 -->|1 min audio sample| PA
     
