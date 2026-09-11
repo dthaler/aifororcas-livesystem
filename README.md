@@ -29,6 +29,7 @@ classDef nodeTitle font-size:40px;
 classDef azureNode fill:azure,stroke:#0088aa,stroke-width:2px,font-size:40px;
 classDef awsNode fill:pink,stroke:#0088aa,stroke-width:2px,font-size:40px;
 classDef herokuNode fill:lightgreen,stroke:#0088aa,stroke-width:2px,font-size:40px;
+classDef stepLabel fill:yellow,font-size:40px,stroke:transparent;
 
 RPI["🎤 RaspberryPI"]
 style RPI fill:transparent,stroke:transparent;
@@ -54,6 +55,8 @@ class PSUB nodeTitle;
 subgraph AWS["Hydrophone Sound Stream"]
     S3[("AWS S3")]
     class S3 awsNode;
+    T1(("1"))
+    class T1 stepLabel;
 end
 class AWS subgraphTitle;
    
@@ -66,6 +69,8 @@ subgraph IS["OrcaHello Inference System"]
     class PA azureNode;
     PAMODEL["PODS-AI Model"]
     class PAMODEL azureNode;
+    T2(("2"))
+    class T2 stepLabel;
     OHDB[("Machine Detection Metadata Store")]
     class OHDB azureNode;
 end
@@ -96,12 +101,16 @@ subgraph NS["Notification Systems"]
     class CSLIST azureNode;
     SNF["Subscriber Function"]
     class SNF azureNode;
+    T4(("4"))
+    class T4 stepLabel;
 end
 class NS subgraphTitle;
     
 subgraph MS["Moderator System"]
     OHMUI["OrcaHello Moderator UI"]
     class OHMUI azureNode;
+    T3(("3"))
+    class T3 stepLabel;
     OSMUI["Orcasite Moderator UI"]
     class OSMUI herokuNode;
 end
