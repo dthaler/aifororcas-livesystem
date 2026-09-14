@@ -91,7 +91,10 @@ namespace AIForOrcas.Client.Web.Models
             get { return Detections?.FirstOrDefault()?.Found; }
             set
             {
-                if (Detections == null) return;
+                if (Detections == null)
+                {
+                    return;
+                }
                 foreach (var d in Detections)
                 {
                     d.Found = value;
