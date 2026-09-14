@@ -25,7 +25,7 @@ else
     <!-- Cards -->
     @for (var i = 0; i < detectionMinutes.Count(); i++)
     {
-        <DetectionMinuteComponent SubmitCallback="ActOnSubmitCallback" Detection=@detectionMinutes[i] />
+        <DetectionMinuteComponent SubmitCallback="ActOnSubmitCallback" DetectionMinute=@detectionMinutes[i] />
     }
 }
 
