@@ -1,4 +1,7 @@
-﻿namespace AIForOrcas.Client.Web.Pages.Detections;
+﻿using AIForOrcas.Client.Web.Models;
+using AIForOrcas.DTO.API;
+
+namespace AIForOrcas.Client.Web.Pages.Detections;
 
 public partial class SingleDetection : ComponentBase, IDisposable
 {
@@ -22,6 +25,7 @@ public partial class SingleDetection : ComponentBase, IDisposable
 
     private string _userId;
     private Detection detection = null;
+    private DetectionMinute detectionMinute = null;
     private bool isFound = true;
     private bool isUnavailable = false;
 

@@ -1,4 +1,6 @@
-﻿namespace AIForOrcas.Client.Web.Pages.Detections;
+﻿using AIForOrcas.Client.Web.Models;
+
+namespace AIForOrcas.Client.Web.Pages.Detections;
 
 public partial class Candidates : IDisposable
 {
@@ -19,6 +21,7 @@ public partial class Candidates : IDisposable
 
     private string _userId;
     private List<Detection> detections = null;
+    private List<DetectionMinute> detectionMinutes = null;
 
     private PaginationOptionsDTO paginationOptions =
         new PaginationOptionsDTO() { RecordsPerPage = 5, Page = 1 };
@@ -77,6 +80,8 @@ public partial class Candidates : IDisposable
             loadStatus = null;
             detections = paginatedResponse.Response;
         }
+
+        detectionMinutes = DetectionMinute.CreateDetectionMinutes(detections);
     }
 
     private async Task ActOnSelectPageCallback(PaginationOptionsDTO returnedPaginationOptions)
