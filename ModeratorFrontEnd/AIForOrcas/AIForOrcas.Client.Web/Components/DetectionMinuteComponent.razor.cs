@@ -91,7 +91,7 @@ public partial class DetectionMinuteComponent
                     value += ", ";
                 }
                 value += $"{d.Confidence.ToString("00.##")}%";
-            }   
+            }
             return $"{value} average confidence";
         }
     }
