@@ -94,6 +94,51 @@ public class DetectionsController : ControllerBase
                 MetadataFilters.DefaultRecordsPerPage));
     }
 
+    private static List<List<Detection>> GroupDetectionsByMinute(List<Detection> detections)
+    {
+        return detections
+            .GroupBy(d => new
+            {
+                Timestamp = new DateTime(
+                    d.Timestamp.Year,
+                    d.Timestamp.Month,
+                    d.Timestamp.Day,
+                    d.Timestamp.Hour,
+                    d.Timestamp.Minute,
+                    0,
+                    d.Timestamp.Kind),
+                LocationName = d.Location?.Name ?? string.Empty
+            })
+            .Select(group => group.ToList())
+            .ToList();
+    }
+
+    private void ApplySortMinutePaginationAndHeaders(ref List<Detection> results, DetectionQueryParameters queryParameters)
+    {
+        if (queryParameters.SortBy.ToLower() == "confidence")
+        {
+            DetectionFilters.ApplyConfidenceSortFilter(ref results, queryParameters.SortOrder);
+        }
+        else if (queryParameters.SortBy.ToLower() == "timestamp")
+        {
+            DetectionFilters.ApplyTimestampSortFilter(ref results, queryParameters.SortOrder);
+        }
+
+        var groupedResults = GroupDetectionsByMinute(results);
+        var recordsPerPage = queryParameters.RecordsPerPage > 0
+            ? queryParameters.RecordsPerPage
+            : MetadataFilters.DefaultRecordsPerPage;
+        var skip = queryParameters.Page > 0 ? queryParameters.Page - 1 : 0;
+
+        results = groupedResults
+            .Skip(skip * recordsPerPage)
+            .Take(recordsPerPage)
+            .SelectMany(group => group)
+            .ToList();
+
+        SetHeaderCounts(groupedResults.Count, recordsPerPage);
+    }
+
     #endregion
 
     /// <summary>
@@ -239,9 +284,6 @@ public class DetectionsController : ControllerBase
                 return NoContent();
             }
 
-            // total number of records
-            double recordCount = queryable.Count();
-
             var results = queryable
                 .Select(x => DetectionProcessors.ToDetection(x)).ToList();
 
@@ -250,8 +292,8 @@ public class DetectionsController : ControllerBase
             //       Had to convert from string (how stored in Cosmos) to DateTime in order to apply the
             //       select, but that messed up the SortBy since Cosmos is expecting a string.
 
-            // apply sort, pagination filters and set page count headers
-            ApplySortPaginationAndHeaders(ref results, recordCount, queryParameters);
+            // apply sort, minute pagination filters and set page count headers
+            ApplySortMinutePaginationAndHeaders(ref results, queryParameters);
 
             // map to returnable data type and return
             return Ok(results);
@@ -312,14 +354,11 @@ public class DetectionsController : ControllerBase
                 return NoContent();
             }
 
-            // total number of records
-            double recordCount = queryable.Count();
-
             var results = queryable
                 .Select(x => DetectionProcessors.ToDetection(x)).ToList();
 
-            // apply sort, pagination filters and set page count headers
-            ApplySortPaginationAndHeaders(ref results, recordCount, queryParameters);
+            // apply sort, minute pagination filters and set page count headers
+            ApplySortMinutePaginationAndHeaders(ref results, queryParameters);
 
             // map to returnable data type and return
             return Ok(results);
@@ -380,14 +419,11 @@ public class DetectionsController : ControllerBase
                 return NoContent();
             }
 
-            // total number of records
-            double recordCount = queryable.Count();
-
             var results = queryable
                 .Select(x => DetectionProcessors.ToDetection(x)).ToList();
 
-            // apply sort, pagination filters and set page count headers
-            ApplySortPaginationAndHeaders(ref results, recordCount, queryParameters);
+            // apply sort, minute pagination filters and set page count headers
+            ApplySortMinutePaginationAndHeaders(ref results, queryParameters);
 
             // map to returnable data type and return
             return Ok(results);
@@ -448,14 +484,11 @@ public class DetectionsController : ControllerBase
                 return NoContent();
             }
 
-            // total number of records
-            double recordCount = queryable.Count();
-
             var results = queryable
                 .Select(x => DetectionProcessors.ToDetection(x)).ToList();
 
-            // apply sort, pagination filters and set page count headers
-            ApplySortPaginationAndHeaders(ref results, recordCount, queryParameters);
+            // apply sort, minute pagination filters and set page count headers
+            ApplySortMinutePaginationAndHeaders(ref results, queryParameters);
 
             // map to returnable data type and return
             return Ok(results);
