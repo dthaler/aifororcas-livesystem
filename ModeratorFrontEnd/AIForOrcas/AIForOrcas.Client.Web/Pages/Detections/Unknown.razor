@@ -23,7 +23,7 @@ else
     }
 
     <!-- Cards -->
-    @for (var i = 0; i < detections.Count(); i++)
+    @for (var i = 0; i < detectionMinutes.Count(); i++)
     {
         <DetectionMinuteComponent SubmitCallback="ActOnSubmitCallback"
                                   DetectionMinute=@detectionMinutes[i] />
@@ -31,7 +31,7 @@ else
 }
 
 <!-- Pagination -->
-@if (detections != null && detections.Count > 0)
+@if (detectionMinutes != null && detectionMinutes.Count > 0)
 {
     <div class="col-12 text-left px-0">
         <PaginationComponent PaginationOptions=@paginationOptions
