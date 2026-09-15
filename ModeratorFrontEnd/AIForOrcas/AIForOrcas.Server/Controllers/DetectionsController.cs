@@ -107,7 +107,7 @@ public class DetectionsController : ControllerBase
                     d.Timestamp.Minute,
                     0,
                     d.Timestamp.Kind),
-                LocationName = d.Location?.Name ?? string.Empty
+                HydrophoneId = d.Location?.Id ?? string.Empty
             })
             .Select(group => group.ToList())
             .ToList();
