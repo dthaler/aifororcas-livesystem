@@ -45,6 +45,41 @@ public partial class SingleDetection : ComponentBase, IDisposable
         if (!isUnavailable && detection.Id == null)
         {
             isFound = false;
+            return;
+        }
+
+        // If we have a valid detection, fetch all detections that share the same minute and location.
+        if (!isUnavailable)
+        {
+            // Compute minute start/end for the detection timestamp preserving Kind.
+            var ts = detection.Timestamp;
+            var minuteStart = new DateTime(ts.Year, ts.Month, ts.Day, ts.Hour, ts.Minute, 0, ts.Kind);
+            var minuteEnd = minuteStart.AddMinutes(1);
+
+            // Build pagination and filter options to hit the root GET endpoint with a date range and location filter.
+            var pagination = new PaginationOptionsDTO
+            {
+                Page = 1,
+                RecordsPerPage = 100
+            };
+
+            var filter = new ReviewedFilterOptionsDTO
+            {
+                SortBy = "timestamp",
+                SortOrder = "asc",
+                Timeframe = "range",
+                Location = detection.Location?.Name ?? "all",
+                DateFrom = minuteStart,
+                DateTo = minuteEnd
+            };
+
+            var result = await Service.GetDetectionsAsync(pagination, filter);
+            var allDetections = result?.Response ?? new List<Detection>();
+
+            // Initialize detectionMinute using the returned detection set. The factory groups by minute+location,
+            // so the requested set should produce one group; pick the first.
+            var minutes = DetectionMinute.CreateDetectionMinutes(allDetections);
+            detectionMinute = minutes.FirstOrDefault() ?? new DetectionMinute { Detections = new List<Detection> { detection } };
         }
     }
 
