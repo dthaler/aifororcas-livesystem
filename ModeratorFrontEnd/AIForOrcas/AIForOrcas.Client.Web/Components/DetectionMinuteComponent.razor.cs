@@ -430,14 +430,63 @@ public partial class DetectionMinuteComponent
         await JSRuntime.InvokeVoidAsync("ToggleModalSpectrogram");
     }
 
-    private string RegionsJson =>
-        JsonSerializer.Serialize(DetectionMinute.Annotations.Select(annotation => new
+    // One outline color per AI model in the minute. The first entry is the color
+    // the single-model card has always used, so a minute with one model looks
+    // unchanged; further models cycle through the rest.
+    private static readonly string[] RegionColorPalette =
+    {
+        "rgba(214, 51, 132, 0.95)",
+        "rgba(255, 255, 255, 0.95)",
+        "rgba(255, 193, 7, 0.95)",
+        "rgba(13, 202, 240, 0.95)"
+    };
+
+    // Distinct models in order of first appearance, each paired with its color.
+    private List<KeyValuePair<string, string>> ModelColors
+    {
+        get
         {
-            start = annotation.StartTime,
-            end = annotation.EndTime,
-            // Outline only (border in ai-for-orcas.css): a fill all but vanished on a small spectrogram
-            color = "rgba(0, 0, 0, 0)"
-        }));
+            var pairs = new List<KeyValuePair<string, string>>();
+
+            foreach (var d in DetectionMinute.Detections)
+            {
+                if (string.IsNullOrWhiteSpace(d?.AIModel))
+                {
+                    continue;
+                }
+
+                var model = d.AIModel.Trim();
+                if (!pairs.Any(p => p.Key.Equals(model, StringComparison.OrdinalIgnoreCase)))
+                {
+                    pairs.Add(new KeyValuePair<string, string>(model,
+                        RegionColorPalette[pairs.Count % RegionColorPalette.Length]));
+                }
+            }
+
+            return pairs;
+        }
+    }
+
+    private string RegionColorFor(string model)
+    {
+        var pair = ModelColors.FirstOrDefault(p =>
+            p.Key.Equals(model?.Trim(), StringComparison.OrdinalIgnoreCase));
+
+        return pair.Key == null ? RegionColorPalette[0] : pair.Value;
+    }
+
+    private string RegionsJson =>
+        JsonSerializer.Serialize(DetectionMinute.Detections
+            .Where(detection => detection?.Annotations != null)
+            .SelectMany(detection => detection.Annotations.Select(annotation => new
+            {
+                start = annotation.StartTime,
+                end = annotation.EndTime,
+                // Outline only (border in ai-for-orcas.css): a fill all but vanished on a small spectrogram
+                color = "rgba(0, 0, 0, 0)",
+                borderColor = RegionColorFor(detection.AIModel),
+                model = detection.AIModel
+            })));
 
     private async Task InitializeModalPlayer()
     {
