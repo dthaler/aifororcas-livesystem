@@ -441,29 +441,24 @@ public partial class DetectionMinuteComponent
         "rgba(13, 202, 240, 0.95)"
     };
 
-    // Distinct models in order of first appearance, each paired with its color.
+    // Distinct models sorted by name, each paired with its color. Sorted, not
+    // in order of appearance, so a model keeps the same color on every card
+    // regardless of which of its detections sorts first within the minute.
     private List<KeyValuePair<string, string>> ModelColors
     {
         get
         {
-            var pairs = new List<KeyValuePair<string, string>>();
+            var models = DetectionMinute.Detections
+                .Where(d => !string.IsNullOrWhiteSpace(d?.AIModel))
+                .Select(d => d.AIModel.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(m => m, StringComparer.OrdinalIgnoreCase)
+                .ToList();
 
-            foreach (var d in DetectionMinute.Detections)
-            {
-                if (string.IsNullOrWhiteSpace(d?.AIModel))
-                {
-                    continue;
-                }
-
-                var model = d.AIModel.Trim();
-                if (!pairs.Any(p => p.Key.Equals(model, StringComparison.OrdinalIgnoreCase)))
-                {
-                    pairs.Add(new KeyValuePair<string, string>(model,
-                        RegionColorPalette[pairs.Count % RegionColorPalette.Length]));
-                }
-            }
-
-            return pairs;
+            return models
+                .Select((model, i) => new KeyValuePair<string, string>(model,
+                    RegionColorPalette[i % RegionColorPalette.Length]))
+                .ToList();
         }
     }
 
