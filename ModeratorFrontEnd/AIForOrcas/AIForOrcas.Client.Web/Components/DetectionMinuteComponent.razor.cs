@@ -369,17 +369,24 @@ public partial class DetectionMinuteComponent
 
         try
         {
-            foreach (var d in DetectionMinute.Detections)
+            var detections = DetectionMinute.Detections.ToList();
+            var comments = DetectionMinute.Comments;
+            var tags = DetectionMinute.Tags;
+            var found = DetectionMinute.Found;
+            var moderator = await AccountService.GetUsername();
+            var moderated = DateTime.Now;
+
+            foreach (var d in detections)
             {
                 var request = new DetectionUpdate()
                 {
                     Id = d.Id,
-                    Comments = DetectionMinute.Comments,
-                    Tags = DetectionMinute.Tags,
-                    Moderator = await AccountService.GetUsername(),
-                    Moderated = DateTime.Now,
+                    Comments = comments,
+                    Tags = tags,
+                    Moderator = moderator,
+                    Moderated = moderated,
                     Reviewed = true,
-                    Found = DetectionMinute.Found
+                    Found = found
                 };
 
                 await SubmitCallback.InvokeAsync(request);
