@@ -433,12 +433,15 @@ public partial class DetectionMinuteComponent
     // One outline color per AI model in the minute. The first entry is the color
     // the single-model card has always used, so a minute with one model looks
     // unchanged; further models cycle through the rest.
+    // After the first (legacy) color, Okabe-Ito colors chosen for contrast on
+    // the blue spectrogram and separability under color vision deficiency:
+    // orange E69F00, then white, then vermillion D55E00.
     private static readonly string[] RegionColorPalette =
     {
         "rgba(214, 51, 132, 0.95)",
+        "rgba(230, 159, 0, 0.95)",
         "rgba(255, 255, 255, 0.95)",
-        "rgba(255, 193, 7, 0.95)",
-        "rgba(13, 202, 240, 0.95)"
+        "rgba(213, 94, 0, 0.95)"
     };
 
     // Distinct models sorted by name, each paired with its color. Sorted, not
