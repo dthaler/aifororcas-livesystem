@@ -68,7 +68,7 @@ public partial class SingleDetection : ComponentBase, IDisposable
                 SortBy = "timestamp",
                 SortOrder = "asc",
                 Timeframe = "range",
-                HydrophoneId = detection.Location?.Id ?? "all",
+                HydrophoneId = string.IsNullOrWhiteSpace(detection.Location?.Id) ? "all" : detection.Location.Id,
                 DateFrom = minuteStart,
                 DateTo = minuteEnd
             };
