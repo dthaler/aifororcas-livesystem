@@ -8,13 +8,19 @@ namespace AIForOrcas.Client.Web.Models
     {
         public List<Detection> Detections { get; set; }
 
-        // Properties common to all Detections in the minute. These are derived from the first detection in the list.
+        // Properties whose value is the same across all Detections in the minute,
+        // so the value can be derived from any detection in the list.
         public string AudioUri => Detections?.FirstOrDefault()?.AudioUri;
         public string SpectrogramUri => Detections?.FirstOrDefault()?.SpectrogramUri;
         public Location Location => Detections?.FirstOrDefault()?.Location;
         public DateTime Timestamp => Detections?.FirstOrDefault()?.Timestamp ?? default;
-        public bool Reviewed => Detections?.FirstOrDefault()?.Reviewed ?? false;
-        public DateTime Moderated => Detections?.FirstOrDefault()?.Moderated ?? default;
+
+
+        // Check whether all detections in this minute were already reviewed.
+        public bool Reviewed => Detections.All(d => d.Reviewed);
+
+        // Get the latest moderated time across detections in this minute.
+        public DateTime Moderated => Detections?.Max(d => d.Moderated) ?? default;
 
         public string Moderator
         {
@@ -101,6 +107,7 @@ namespace AIForOrcas.Client.Web.Models
                 }
             }
         }
+
         public string Comments
         {
             get

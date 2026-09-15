@@ -60,7 +60,7 @@ public partial class SingleDetection : ComponentBase, IDisposable
             var pagination = new PaginationOptionsDTO
             {
                 Page = 1,
-                RecordsPerPage = 100
+                RecordsPerPage = 50
             };
 
             var filter = new ReviewedFilterOptionsDTO
