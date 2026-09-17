@@ -165,6 +165,75 @@ dotnet run
 
 Confirm that the host starts and discovers the eight functions described in the Architecture and Get email list sections above. Use a valid test Cosmos DB connection for the Cosmos-triggered functions; listener errors caused by missing test services or credentials must be resolved before confirming runtime discovery for deployment.
 
+## Local development with .NET Aspire (optional)
+
+A [.NET Aspire](https://learn.microsoft.com/dotnet/aspire/) app host is provided in
+`NotificationSystem.AppHost` to run the full detection→notification pipeline locally from a
+single command — no live Azure resources or shared credentials required. It starts the
+isolated-worker Functions host together with emulators for every backing service the
+functions bind to, plus the Aspire dashboard (structured logs, distributed traces and
+metrics):
+
+- [Azurite](https://learn.microsoft.com/azure/storage/common/storage-use-azurite) backs both
+  the Functions host storage (`AzureWebJobsStorage`) and the app's own
+  `OrcaNotificationStorageSetting` store. The `srkwfound` queue and `EmailList` table are
+  created automatically on startup.
+- The [Azure Cosmos DB emulator](https://learn.microsoft.com/azure/cosmos-db/emulator) backs
+  the `aifororcasmetadatastore_DOCUMENTDB` connection, providing the `predictions/metadata`
+  container that drives the change-feed triggers (the `leases` container is created on demand
+  by the triggers).
+
+The Functions app (`NotificationSystem`) is orchestrated as-is; no application code was
+changed to add the app host — the emulator connection strings are supplied by the
+orchestrator.
+
+### Prerequisites
+
+- [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
+- A container runtime (Docker Desktop or Podman) for the Azurite and Cosmos DB emulator
+  containers (the Cosmos emulator image is ~2 GB and is pulled on first run)
+- [Azure Functions Core Tools v4](https://learn.microsoft.com/azure/azure-functions/functions-run-local) (`func`) on your `PATH` — the Aspire Functions integration uses it to launch the Functions host
+
+### Run
+
+```bash
+cd NotificationSystem/NotificationSystem.AppHost
+dotnet run
+```
+
+Then open the Aspire dashboard URL printed in the console to view resources, logs and traces.
+
+### Scope and follow-ups
+
+The app host wires the Functions **host storage** (`AzureWebJobsStorage`) and the
+application's own backing services to local emulators, so the full detection→notification
+pipeline runs end-to-end with no live Azure:
+
+- `OrcaNotificationStorageSetting` → Azurite (the `srkwfound` queue and `EmailList` table are
+  auto-provisioned on startup)
+- `aifororcasmetadatastore_DOCUMENTDB` → the Cosmos DB emulator (`predictions/metadata`
+  change-feed triggers)
+
+The only settings you still supply yourself are those that target a live external service
+with no local emulator: the AWS SES credentials (`AWS_ACCESS_KEY_ID`,
+`AWS_SECRET_ACCESS_KEY`) and `SenderEmail` used to send moderator/subscriber email, plus
+the Orcasite settings (`ORCASITE_HOSTNAME`, `ORCASITE_APIKEY`). Set them on the
+`NotificationSystem.AppHost` project via user-secrets (or environment variables) and the
+app host forwards any that are present into the Functions process:
+
+```bash
+cd NotificationSystem/NotificationSystem.AppHost
+dotnet user-secrets set "AWS_ACCESS_KEY_ID" "<key>"
+dotnet user-secrets set "AWS_SECRET_ACCESS_KEY" "<secret>"
+dotnet user-secrets set "SenderEmail" "<email address>"
+```
+
+Settings that are not set are simply omitted, so email/Orcasite calls fail only if you
+actually exercise those code paths without supplying them.
+
+An optional natural next step is a `ServiceDefaults` project for shared OpenTelemetry
+configuration.
+
 ## Run on Azure
 
 1. Go to the `orcanotification` Function App.
@@ -181,6 +250,7 @@ The directories in this system are organized as follows:
 
 * img: Contains images used in this README
 * NotificationSystem: Contains the source code for the Azure functions
+* NotificationSystem.AppHost: .NET Aspire app host for running the Functions app locally (see [Local development with .NET Aspire](#local-development-with-net-aspire-optional))
 * NotificationSystem.Tests.Unit: Contains unit tests
 * NotificationSystem.Tests.Integration: Contains integration tests
 * PostBackfillToOrcasite: Contains a console app to post the history of machine detections to the Orcasite detection API
