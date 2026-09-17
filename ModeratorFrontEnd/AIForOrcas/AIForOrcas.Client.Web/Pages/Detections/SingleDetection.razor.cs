@@ -66,7 +66,7 @@ public partial class SingleDetection : ComponentBase, IDisposable
             var filter = new ReviewedFilterOptionsDTO
             {
                 SortBy = "timestamp",
-                SortOrder = "asc",
+                SortOrder = "desc",
                 Timeframe = "range",
                 Location = "all",
                 HydrophoneId = string.IsNullOrWhiteSpace(detection.Location?.Id) ? "all" : detection.Location.Id,
