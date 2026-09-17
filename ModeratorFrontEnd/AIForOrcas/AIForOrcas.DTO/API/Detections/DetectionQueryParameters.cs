@@ -70,5 +70,21 @@ namespace AIForOrcas.DTO.API
 
         private int _recordsPerPage = 10;
         private readonly int _maxRecordsPerPage = 50;
+
+        /// <summary>
+        /// Number of minutes per page to retrieve.
+        /// </summary>
+        /// <example>0</example>
+        public int MinutesPerPage
+        {
+            get => _minutesPerPage;
+            set
+            {
+                _minutesPerPage = (value > _maxMinutesPerPage) ? _maxMinutesPerPage : value;
+            }
+        }
+
+        private int _minutesPerPage = 10;
+        private readonly int _maxMinutesPerPage = 50;
     }
 }

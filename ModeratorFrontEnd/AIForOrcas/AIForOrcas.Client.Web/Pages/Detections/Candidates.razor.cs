@@ -52,6 +52,7 @@ public partial class Candidates : IDisposable
         var paginatedResponse = await Service.GetCandidateDetectionsAsync(paginationOptions, filterOptions);
 
         pagination.TotalNumberOfRecords = paginatedResponse.TotalNumberRecords;
+        pagination.TotalNumberOfMinutes = paginatedResponse.TotalNumberMinutes;
         pagination.TotalNumberOfPages = paginatedResponse.TotalAmountPages;
 
         // The page we requested may no longer exist.

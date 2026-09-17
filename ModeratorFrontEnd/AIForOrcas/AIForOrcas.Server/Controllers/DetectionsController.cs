@@ -17,11 +17,14 @@ public class DetectionsController : ControllerBase
 
     #region Helpers
 
-    private void SetHeaderCounts(double totalRecords, int recordsPerPage)
+    private void SetHeaderCounts(int totalRecords, int totalMinutes, int recordsPerPage, int minutesPerPage)
     {
-        double totalAmountPages = Math.Ceiling(totalRecords / recordsPerPage);
+        int totalAmountPages = (recordsPerPage > 0) ?
+            (int)Math.Ceiling(1.0 * totalRecords / recordsPerPage) :
+            (int)Math.Ceiling(1.0 * totalMinutes / minutesPerPage);
 
         HttpContext.Response.Headers.Add("totalNumberRecords", totalRecords.ToString());
+        HttpContext.Response.Headers.Add("totalNumberMinutes", totalMinutes.ToString());
         HttpContext.Response.Headers.Add("totalAmountPages", totalAmountPages.ToString());
     }
 
@@ -57,7 +60,8 @@ public class DetectionsController : ControllerBase
             throw new ArgumentNullException("Page");
         }
 
-        if (queryParameters.RecordsPerPage == 0)
+        // One of RecordsPerPage or MinutesPerPage must be non-zero, but not both.
+        if ((queryParameters.RecordsPerPage == 0) == (queryParameters.MinutesPerPage == 0))
         {
             throw new ArgumentNullException("RecordsPerPage");
         }
@@ -76,7 +80,7 @@ public class DetectionsController : ControllerBase
         }
     }
 
-    private void ApplySortPaginationAndHeaders(ref List<Detection> results, double recordCount, DetectionQueryParameters queryParameters)
+    private void ApplySortPaginationAndHeaders(ref List<Detection> results, int recordCount, int minuteCount, DetectionQueryParameters queryParameters)
     {
         if (queryParameters.SortBy.ToLower() == "confidence")
         {
@@ -89,9 +93,13 @@ public class DetectionsController : ControllerBase
 
         DetectionFilters.ApplyPaginationFilter(ref results, queryParameters.Page, queryParameters.RecordsPerPage);
 
-        SetHeaderCounts(recordCount,
-            (queryParameters.RecordsPerPage > 0 ? queryParameters.RecordsPerPage :
-                MetadataFilters.DefaultRecordsPerPage));
+        int recordsPerPage = queryParameters.RecordsPerPage;
+        int minutesPerPage = queryParameters.MinutesPerPage;
+        if (recordsPerPage == 0 && minutesPerPage == 0)
+        {
+            recordsPerPage = MetadataFilters.DefaultRecordsPerPage;
+        }
+        SetHeaderCounts(recordCount, minuteCount, recordsPerPage, minutesPerPage);
     }
 
     private static List<List<Detection>> GroupDetectionsByMinute(List<Detection> detections)
@@ -124,19 +132,43 @@ public class DetectionsController : ControllerBase
             DetectionFilters.ApplyTimestampSortFilter(ref results, queryParameters.SortOrder);
         }
 
-        var groupedResults = GroupDetectionsByMinute(results);
-        var recordsPerPage = queryParameters.RecordsPerPage > 0
-            ? queryParameters.RecordsPerPage
-            : MetadataFilters.DefaultRecordsPerPage;
+        // Preserve original full result set for computing totals.
+        var originalResults = results;
+
+        int recordsPerPage = queryParameters.RecordsPerPage;
+        int minutesPerPage = queryParameters.MinutesPerPage;
+        if (recordsPerPage == 0 && minutesPerPage == 0)
+        {
+            recordsPerPage = MetadataFilters.DefaultRecordsPerPage;
+        }
+
+        // Compute total counts before pagination.
+        int totalRecords = originalResults.Count;
+        var groupedOriginal = GroupDetectionsByMinute(originalResults);
+        int totalMinutes = groupedOriginal.Count;
+
         var skip = queryParameters.Page > 0 ? queryParameters.Page - 1 : 0;
 
-        results = groupedResults
-            .Skip(skip * recordsPerPage)
-            .Take(recordsPerPage)
-            .SelectMany(group => group)
-            .ToList();
+        if (recordsPerPage > 0)
+        {
+            // Pagination by records - no grouping required for selecting page entries.
+            results = originalResults
+                .Skip(skip * recordsPerPage)
+                .Take(recordsPerPage)
+                .ToList();
+        }
+        else
+        {
+            // Pagination by minutes - group first, then page groups and flatten.
+            results = groupedOriginal
+                .Skip(skip * minutesPerPage)
+                .Take(minutesPerPage)
+                .SelectMany(group => group)
+                .ToList();
+        }
 
-        SetHeaderCounts(groupedResults.Count, recordsPerPage);
+        // Set headers using totals from the un-paginated data.
+        SetHeaderCounts(totalRecords, totalMinutes, recordsPerPage, minutesPerPage);
     }
 
     #endregion
@@ -172,13 +204,17 @@ public class DetectionsController : ControllerBase
             }
 
             // total number of records
-            double recordCount = queryable.Count();
+            int recordCount = queryable.Count();
 
             var results = queryable
                 .Select(x => DetectionProcessors.ToDetection(x)).ToList();
 
+            // Count number of detection minutes.
+            List<List<Detection>> detectionsByMinute = GroupDetectionsByMinute(results);
+            int minuteCount = detectionsByMinute.Count;
+
             // apply sort, pagination filters and set page count headers
-            ApplySortPaginationAndHeaders(ref results, recordCount, queryParameters);
+            ApplySortPaginationAndHeaders(ref results, recordCount, minuteCount, queryParameters);
 
             // map to returnable data type and return
             return Ok(results);
