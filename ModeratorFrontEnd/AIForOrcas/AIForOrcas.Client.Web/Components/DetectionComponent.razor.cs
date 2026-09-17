@@ -346,6 +346,8 @@ public partial class DetectionComponent
             };
 
             await SubmitCallback.InvokeAsync(request);
+
+            ToastService.ShowSuccess("Detection successfully updated.");
         }
         catch (Exception exception) when (exception is HttpRequestException || exception is TaskCanceledException)
         {

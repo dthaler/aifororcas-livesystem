@@ -93,8 +93,6 @@ public partial class Confirmed : IDisposable
         List<string> leafTags = Detection.GetLeafTags(request.Tags);
         TagCache.SetTags(_userId, leafTags);
 
-        ToastService.ShowSuccess("Detection successfully updated.");
-
         await LoadDetections();
     }
 

@@ -91,8 +91,6 @@ public partial class SingleDetection : ComponentBase, IDisposable
         List<string> leafTags = Detection.GetLeafTags(request.Tags);
         TagCache.SetTags(_userId, leafTags);
 
-        ToastService.ShowSuccess("Detection successfully updated.");
-
         await LoadDetection();
     }
 

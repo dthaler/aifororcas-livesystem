@@ -114,8 +114,6 @@ public partial class Candidates : IDisposable
         List<string> leafTags = Detection.GetLeafTags(request.Tags);
         TagCache.SetTags(_userId, leafTags);
 
-        ToastService.ShowSuccess("Detection successfully updated.");
-
         await JSRuntime.InvokeVoidAsync("DestroyActivePlayer");
         await LoadDetections();
 
