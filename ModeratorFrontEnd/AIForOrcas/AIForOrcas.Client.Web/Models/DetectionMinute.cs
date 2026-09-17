@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-
-namespace AIForOrcas.Client.Web.Models
+﻿namespace AIForOrcas.Client.Web.Models
 {
     public class DetectionMinute
     {
@@ -94,7 +90,11 @@ namespace AIForOrcas.Client.Web.Models
 
         public string Found
         {
-            get { return Detections?.FirstOrDefault()?.Found; }
+            get
+            {
+                return Detections.FirstOrDefault(d => !string.IsNullOrEmpty(d.Found))?.Found
+    ?? string.Empty;
+            }
             set
             {
                 if (Detections == null)
@@ -112,7 +112,8 @@ namespace AIForOrcas.Client.Web.Models
         {
             get
             {
-                return Detections?.FirstOrDefault()?.Comments;
+                return Detections.FirstOrDefault(d => !string.IsNullOrEmpty(d.Comments))?.Comments
+?? string.Empty;
             }
             set
             {
