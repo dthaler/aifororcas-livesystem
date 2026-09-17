@@ -212,7 +212,14 @@ namespace AIForOrcas.Client.Web.Models
             var groupedDetections = detections
                 .GroupBy(d => new
                 {
-                    Timestamp = d.Timestamp.ToString("yyyy-MM-dd HH:mm"),
+                    Timestamp = new DateTime(
+                        d.Timestamp.Year,
+                        d.Timestamp.Month,
+                        d.Timestamp.Day,
+                        d.Timestamp.Hour,
+                        d.Timestamp.Minute,
+                        0,
+                        d.Timestamp.Kind),
                     HydrophoneId = d.Location?.Id ?? string.Empty
                 });
 
