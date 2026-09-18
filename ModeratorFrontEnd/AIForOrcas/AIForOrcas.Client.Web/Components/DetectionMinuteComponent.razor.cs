@@ -162,7 +162,12 @@ public partial class DetectionMinuteComponent
         if (!DetectionMinute.Reviewed && !ReferenceEquals(DetectionMinute, _initializedDetectionMinute))
         {
             _initializedDetectionMinute = DetectionMinute;
-            DetectionMinute.Found = string.Empty;
+
+            // A partially reviewed minute keeps the reviewed detection's verdict
+            // visible, so the moderator can see what a submit would overwrite.
+            // A fully unreviewed minute still starts unselected.
+            DetectionMinute.Found =
+                DetectionMinute.Detections?.FirstOrDefault(d => d.Reviewed)?.Found ?? string.Empty;
 
             if (string.IsNullOrEmpty(DetectionMinute.Tags))
             {
@@ -390,9 +395,9 @@ public partial class DetectionMinuteComponent
                 };
 
                 await SubmitCallback.InvokeAsync(request);
-
-                ToastService.ShowSuccess("Detection successfully updated.");
             }
+
+            ToastService.ShowSuccess("Detection successfully updated.");
         }
         catch (Exception exception) when (exception is HttpRequestException || exception is TaskCanceledException)
         {

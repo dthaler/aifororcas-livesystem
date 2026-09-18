@@ -10,6 +10,6 @@
 
         public int Radius { get; set; } = 3;
 
-        public string QueryString { get => $"page={Page}&recordsPerPage={RecordsPerPage}"; }
+        public string QueryString { get => $"page={Page}&recordsPerPage={RecordsPerPage}&minutesPerPage={MinutesPerPage}"; }
     }
 }

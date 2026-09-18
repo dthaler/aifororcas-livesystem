@@ -24,7 +24,7 @@ public partial class Confirmed : IDisposable
     private List<DetectionMinute> detectionMinutes = null;
 
     private PaginationOptionsDTO paginationOptions =
-        new PaginationOptionsDTO() { RecordsPerPage = 5, Page = 1 };
+        new PaginationOptionsDTO() { RecordsPerPage = 0, MinutesPerPage = 5, Page = 1 };
 
     private ReviewedFilterOptionsDTO filterOptions =
         new ReviewedFilterOptionsDTO() { SortBy = "timestamp", SortOrder = "desc", Timeframe = "24h", Location = "all", HydrophoneId = "all" };
@@ -49,6 +49,7 @@ public partial class Confirmed : IDisposable
         var paginatedResponse = await Service.GetConfirmedDetectionsAsync(paginationOptions, filterOptions);
 
         pagination.TotalNumberOfRecords = paginatedResponse.TotalNumberRecords;
+        pagination.TotalNumberOfMinutes = paginatedResponse.TotalNumberMinutes;
         pagination.TotalNumberOfPages = paginatedResponse.TotalAmountPages;
 
         if (pagination.TotalNumberOfPages > 0 && paginationOptions.Page > pagination.TotalNumberOfPages)
@@ -56,6 +57,7 @@ public partial class Confirmed : IDisposable
             paginationOptions.Page = pagination.TotalNumberOfPages;
             paginatedResponse = await Service.GetConfirmedDetectionsAsync(paginationOptions, filterOptions);
             pagination.TotalNumberOfRecords = paginatedResponse.TotalNumberRecords;
+            pagination.TotalNumberOfMinutes = paginatedResponse.TotalNumberMinutes;
             pagination.TotalNumberOfPages = paginatedResponse.TotalAmountPages;
         }
 
