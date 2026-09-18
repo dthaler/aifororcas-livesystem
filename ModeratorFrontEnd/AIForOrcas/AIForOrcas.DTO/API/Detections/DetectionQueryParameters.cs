@@ -68,7 +68,7 @@ namespace AIForOrcas.DTO.API
             }
         }
 
-        private int _recordsPerPage = 10;
+        private int _recordsPerPage = 5;
         private readonly int _maxRecordsPerPage = 50;
 
         /// <summary>
@@ -84,7 +84,7 @@ namespace AIForOrcas.DTO.API
             }
         }
 
-        private int _minutesPerPage = 10;
+        private int _minutesPerPage = 0;
         private readonly int _maxMinutesPerPage = 50;
     }
 }
