@@ -112,8 +112,14 @@
         {
             get
             {
-                return Detections?.FirstOrDefault(d => !string.IsNullOrEmpty(d.Comments))?.Comments
-                    ?? string.Empty;
+                // A moderated minute can carry a different comment per
+                // detection; show each distinct one once, joined.
+                var unique = Detections?
+                    .Select(d => d?.Comments)
+                    .Where(c => !string.IsNullOrEmpty(c))
+                    .Distinct()
+                    .ToList() ?? new List<string>();
+                return string.Join("; ", unique);
             }
             set
             {
