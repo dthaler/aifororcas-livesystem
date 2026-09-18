@@ -80,28 +80,6 @@ public class DetectionsController : ControllerBase
         }
     }
 
-    private void ApplySortPaginationAndHeaders(ref List<Detection> results, int recordCount, int minuteCount, DetectionQueryParameters queryParameters)
-    {
-        if (queryParameters.SortBy.ToLower() == "confidence")
-        {
-            DetectionFilters.ApplyConfidenceSortFilter(ref results, queryParameters.SortOrder);
-        }
-        else if (queryParameters.SortBy.ToLower() == "timestamp")
-        {
-            DetectionFilters.ApplyTimestampSortFilter(ref results, queryParameters.SortOrder);
-        }
-
-        DetectionFilters.ApplyPaginationFilter(ref results, queryParameters.Page, queryParameters.RecordsPerPage);
-
-        int recordsPerPage = queryParameters.RecordsPerPage;
-        int minutesPerPage = queryParameters.MinutesPerPage;
-        if (recordsPerPage == 0 && minutesPerPage == 0)
-        {
-            recordsPerPage = MetadataFilters.DefaultRecordsPerPage;
-        }
-        SetHeaderCounts(recordCount, minuteCount, recordsPerPage, minutesPerPage);
-    }
-
     private static List<List<Detection>> GroupDetectionsByMinute(List<Detection> detections)
     {
         return detections
@@ -203,18 +181,13 @@ public class DetectionsController : ControllerBase
                 return NoContent();
             }
 
-            // total number of records
-            int recordCount = queryable.Count();
-
             var results = queryable
                 .Select(x => DetectionProcessors.ToDetection(x)).ToList();
 
-            // Count number of detection minutes.
-            List<List<Detection>> detectionsByMinute = GroupDetectionsByMinute(results);
-            int minuteCount = detectionsByMinute.Count;
-
-            // apply sort, pagination filters and set page count headers
-            ApplySortPaginationAndHeaders(ref results, recordCount, minuteCount, queryParameters);
+            // apply sort, pagination filters and set page count headers.
+            // Same helper as the moderation endpoints, so minutesPerPage pages
+            // whole minutes here too instead of only shaping the headers.
+            ApplySortMinutePaginationAndHeaders(ref results, queryParameters);
 
             // map to returnable data type and return
             return Ok(results);
