@@ -106,8 +106,10 @@ public partial class Candidates : IDisposable
     private async Task ActOnSubmitCallback(DetectionUpdate request)
     {
         // The candidate that takes the submitted card's place is the next one to
-        // moderate; remember where it will be before the list reloads.
-        int submittedIndex = detections?.FindIndex(d => d.Id == request.Id) ?? -1;
+        // moderate; remember where it will be before the list reloads. Cards are
+        // minutes, so the index and the scroll target both come from the minute
+        // list; a submitted id can be any member of its minute.
+        int submittedIndex = detectionMinutes?.FindIndex(m => m.Detections.Any(d => d.Id == request.Id)) ?? -1;
         int pageBefore = paginationOptions.Page;
 
         await Service.UpdateRequestAsync(request);
@@ -118,14 +120,14 @@ public partial class Candidates : IDisposable
         await JSRuntime.InvokeVoidAsync("DestroyActivePlayer");
         await LoadDetections();
 
-        if (submittedIndex >= 0 && detections != null && detections.Count > 0)
+        if (submittedIndex >= 0 && detectionMinutes != null && detectionMinutes.Count > 0)
         {
             // Same page: the card that moved up into the submitted slot (or the
             // last one, if that slot is gone). A different page: start at its top.
             int nextIndex = paginationOptions.Page == pageBefore
-                ? Math.Min(submittedIndex, detections.Count - 1)
+                ? Math.Min(submittedIndex, detectionMinutes.Count - 1)
                 : 0;
-            _scrollToDetectionId = detections[nextIndex].Id;
+            _scrollToDetectionId = detectionMinutes[nextIndex].Id;
         }
     }
 
