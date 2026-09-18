@@ -372,6 +372,7 @@ public partial class DetectionMinuteComponent
         }
         _submitting = true;
 
+        var submitted = 0;
         try
         {
             var detections = DetectionMinute.Detections.ToList();
@@ -395,6 +396,7 @@ public partial class DetectionMinuteComponent
                 };
 
                 await SubmitCallback.InvokeAsync(request);
+                submitted++;
             }
 
             ToastService.ShowSuccess("Detection successfully updated.");
@@ -405,7 +407,11 @@ public partial class DetectionMinuteComponent
             // card and the moderator's selections untouched for a retry. The
             // wording stays generic: the same exception covers an unreachable
             // server and an error response, and the service logs the detail.
-            ToastService.ShowError("The verdict was not saved. Please try again.");
+            // Updates are sent one detection at a time, so a failure partway
+            // through a minute means the earlier detections did save.
+            ToastService.ShowError(submitted == 0
+                ? "The verdict was not saved. Please try again."
+                : "Only part of the minute was saved. Please submit again to finish.");
         }
         finally
         {
@@ -430,14 +436,61 @@ public partial class DetectionMinuteComponent
         await JSRuntime.InvokeVoidAsync("ToggleModalSpectrogram");
     }
 
-    private string RegionsJson =>
-        JsonSerializer.Serialize(DetectionMinute.Annotations.Select(annotation => new
+    // One outline color per AI model in the minute. The first entry is the color
+    // the single-model card has always used, so a minute with one model looks
+    // unchanged; further models cycle through the rest.
+    // After the first (legacy) color, Okabe-Ito colors chosen for contrast on
+    // the blue spectrogram and separability under color vision deficiency:
+    // orange E69F00, then white, then vermillion D55E00.
+    private static readonly string[] RegionColorPalette =
+    {
+        "rgba(214, 51, 132, 0.95)",
+        "rgba(230, 159, 0, 0.95)",
+        "rgba(255, 255, 255, 0.95)",
+        "rgba(213, 94, 0, 0.95)"
+    };
+
+    // Distinct models sorted by name, each paired with its color. Sorted, not
+    // in order of appearance, so a model keeps the same color on every card
+    // regardless of which of its detections sorts first within the minute.
+    private List<KeyValuePair<string, string>> ModelColors
+    {
+        get
         {
-            start = annotation.StartTime,
-            end = annotation.EndTime,
-            // Outline only (border in ai-for-orcas.css): a fill all but vanished on a small spectrogram
-            color = "rgba(0, 0, 0, 0)"
-        }));
+            var models = DetectionMinute.Detections
+                .Where(d => !string.IsNullOrWhiteSpace(d?.AIModel))
+                .Select(d => d.AIModel.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(m => m, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            return models
+                .Select((model, i) => new KeyValuePair<string, string>(model,
+                    RegionColorPalette[i % RegionColorPalette.Length]))
+                .ToList();
+        }
+    }
+
+    private string RegionColorFor(string model)
+    {
+        var pair = ModelColors.FirstOrDefault(p =>
+            p.Key.Equals(model?.Trim(), StringComparison.OrdinalIgnoreCase));
+
+        return pair.Key == null ? RegionColorPalette[0] : pair.Value;
+    }
+
+    private string RegionsJson =>
+        JsonSerializer.Serialize(DetectionMinute.Detections
+            .Where(detection => detection?.Annotations != null)
+            .SelectMany(detection => detection.Annotations.Select(annotation => new
+            {
+                start = annotation.StartTime,
+                end = annotation.EndTime,
+                // Outline only (border in ai-for-orcas.css): a fill all but vanished on a small spectrogram
+                color = "rgba(0, 0, 0, 0)",
+                borderColor = RegionColorFor(detection.AIModel),
+                model = detection.AIModel
+            })));
 
     private async Task InitializeModalPlayer()
     {
