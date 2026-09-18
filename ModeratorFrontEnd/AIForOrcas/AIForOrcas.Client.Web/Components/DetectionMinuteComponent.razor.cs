@@ -171,13 +171,19 @@ public partial class DetectionMinuteComponent
 
             if (string.IsNullOrEmpty(DetectionMinute.Tags))
             {
-                if (DetectionMinute.GlobalPredictionLabel == "transient")
+                // Check every model's label, not just the first detection's:
+                // a model with an empty label sorting first must not hide
+                // another model's transient or humpback prediction.
+                foreach (var label in DetectionMinute.GlobalPredictionLabels)
                 {
-                    AddTag("transient");
-                }
-                else if (DetectionMinute.GlobalPredictionLabel == "humpback")
-                {
-                    AddTag("humpback");
+                    if (label == "transient")
+                    {
+                        AddTag("transient");
+                    }
+                    else if (label == "humpback")
+                    {
+                        AddTag("humpback");
+                    }
                 }
 
                 // Don't add the "srkw" tag here because we want the user
@@ -451,8 +457,11 @@ public partial class DetectionMinuteComponent
     };
 
     // Distinct models sorted by name, each paired with its color. Sorted, not
-    // in order of appearance, so a model keeps the same color on every card
-    // regardless of which of its detections sorts first within the minute.
+    // in order of appearance, so the pairing does not depend on which of a
+    // model's detections sorts first within the minute. Deliberate consequence:
+    // a single-model minute always uses the first palette color (the legacy
+    // magenta), whichever model it is; only multi-model minutes differentiate,
+    // and the per-card legend carries the mapping.
     private List<KeyValuePair<string, string>> ModelColors
     {
         get

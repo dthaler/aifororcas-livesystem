@@ -15,13 +15,13 @@ else
 {
     <!-- Pagination -->
     @if (detectionMinutes != null && detectionMinutes.Count > 0)
-        {
-                <div class="col-12 text-left px-0">
-                        <PaginationComponent PaginationOptions=@paginationOptions
-                                             PaginationResults="@pagination"
-                                             SelectPageCallback="ActOnSelectPageCallback" />
-                </div>
-        }
+    {
+        <div class="col-12 text-left px-0">
+            <PaginationComponent PaginationOptions=@paginationOptions
+                                 PaginationResults="@pagination"
+                                 SelectPageCallback="ActOnSelectPageCallback" />
+        </div>
+    }
 
     <!-- Cards -->
     @for (var i = 0; i < detectionMinutes.Count(); i++)

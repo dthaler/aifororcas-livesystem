@@ -70,17 +70,22 @@ public partial class SingleDetection : ComponentBase, IDisposable
                 Timeframe = "range",
                 Location = "all",
                 HydrophoneId = string.IsNullOrWhiteSpace(detection.Location?.Id) ? "all" : detection.Location.Id,
+                // The range filter's upper bound is inclusive, so back off one
+                // tick rather than one second: timestamps can carry fractional
+                // seconds and :59.250 still belongs to this minute.
                 DateFrom = minuteStart,
-                DateTo = minuteEnd.AddSeconds(-1)
+                DateTo = minuteEnd.AddTicks(-1)
             };
 
             var result = await Service.GetDetectionsAsync(pagination, filter);
             var allDetections = result?.Response ?? new List<Detection>();
 
-            // Initialize detectionMinute using the returned detection set. The factory groups by minute+location,
-            // so the requested set should produce one group; pick the first.
+            // Initialize detectionMinute using the returned detection set. The factory groups by minute+location;
+            // when the hydrophone falls back to "all", several hydrophones can share the minute, so pick the
+            // group that actually holds the requested detection.
             var minutes = DetectionMinute.CreateDetectionMinutes(allDetections);
-            detectionMinute = minutes.FirstOrDefault() ?? new DetectionMinute { Detections = new List<Detection> { detection } };
+            detectionMinute = minutes.FirstOrDefault(m => m.Detections.Any(d => d.Id == detection.Id))
+                ?? new DetectionMinute { Detections = new List<Detection> { detection } };
         }
     }
 
