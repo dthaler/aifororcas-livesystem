@@ -71,7 +71,7 @@ public partial class SingleDetection : ComponentBase, IDisposable
                 Location = "all",
                 HydrophoneId = string.IsNullOrWhiteSpace(detection.Location?.Id) ? "all" : detection.Location.Id,
                 DateFrom = minuteStart,
-                DateTo = minuteEnd
+                DateTo = minuteEnd.AddSeconds(-1)
             };
 
             var result = await Service.GetDetectionsAsync(pagination, filter);
