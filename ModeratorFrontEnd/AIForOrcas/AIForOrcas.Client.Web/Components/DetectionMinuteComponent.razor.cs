@@ -372,6 +372,7 @@ public partial class DetectionMinuteComponent
         }
         _submitting = true;
 
+        var submitted = 0;
         try
         {
             var detections = DetectionMinute.Detections.ToList();
@@ -395,6 +396,7 @@ public partial class DetectionMinuteComponent
                 };
 
                 await SubmitCallback.InvokeAsync(request);
+                submitted++;
             }
 
             ToastService.ShowSuccess("Detection successfully updated.");
@@ -405,7 +407,11 @@ public partial class DetectionMinuteComponent
             // card and the moderator's selections untouched for a retry. The
             // wording stays generic: the same exception covers an unreachable
             // server and an error response, and the service logs the detail.
-            ToastService.ShowError("The verdict was not saved. Please try again.");
+            // Updates are sent one detection at a time, so a failure partway
+            // through a minute means the earlier detections did save.
+            ToastService.ShowError(submitted == 0
+                ? "The verdict was not saved. Please try again."
+                : "Only part of the minute was saved. Please submit again to finish.");
         }
         finally
         {
