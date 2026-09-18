@@ -442,26 +442,28 @@ public partial class DetectionMinuteComponent
         await JSRuntime.InvokeVoidAsync("ToggleModalSpectrogram");
     }
 
-    // One outline color per AI model in the minute. The first entry is the color
-    // the single-model card has always used, so a minute with one model looks
-    // unchanged; further models cycle through the rest.
-    // After the first (legacy) color, Okabe-Ito colors chosen for contrast on
-    // the blue spectrogram and separability under color vision deficiency:
-    // orange E69F00, then white, then vermillion D55E00.
-    private static readonly string[] RegionColorPalette =
+    // Each known model keeps one color on every card, so color means model
+    // across the whole queue: OrcaHello keeps the legacy magenta, PODS-AI the
+    // Okabe-Ito orange chosen for contrast on the blue spectrogram and
+    // separability under color vision deficiency.
+    private static readonly Dictionary<string, string> ModelColorRegistry =
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["OrcaHello"] = "rgba(214, 51, 132, 0.95)",
+            ["PODS-AI"] = "rgba(230, 159, 0, 0.95)"
+        };
+
+    // Fallback colors for models not in the registry: white, then vermillion
+    // D55E00 (also Okabe-Ito).
+    private static readonly string[] FallbackColorPalette =
     {
-        "rgba(214, 51, 132, 0.95)",
-        "rgba(230, 159, 0, 0.95)",
         "rgba(255, 255, 255, 0.95)",
         "rgba(213, 94, 0, 0.95)"
     };
 
-    // Distinct models sorted by name, each paired with its color. Sorted, not
-    // in order of appearance, so the pairing does not depend on which of a
-    // model's detections sorts first within the minute. Deliberate consequence:
-    // a single-model minute always uses the first palette color (the legacy
-    // magenta), whichever model it is; only multi-model minutes differentiate,
-    // and the per-card legend carries the mapping.
+    // Distinct models sorted by name, each paired with its color: registry
+    // color when the model is known, else a fallback slot by sorted position,
+    // so an unknown model still gets the same color on every card.
     private List<KeyValuePair<string, string>> ModelColors
     {
         get
@@ -473,10 +475,16 @@ public partial class DetectionMinuteComponent
                 .OrderBy(m => m, StringComparer.OrdinalIgnoreCase)
                 .ToList();
 
-            return models
-                .Select((model, i) => new KeyValuePair<string, string>(model,
-                    RegionColorPalette[i % RegionColorPalette.Length]))
-                .ToList();
+            var fallbackIndex = 0;
+            var pairs = new List<KeyValuePair<string, string>>();
+            foreach (var model in models)
+            {
+                var color = ModelColorRegistry.TryGetValue(model, out var registered)
+                    ? registered
+                    : FallbackColorPalette[fallbackIndex++ % FallbackColorPalette.Length];
+                pairs.Add(new KeyValuePair<string, string>(model, color));
+            }
+            return pairs;
         }
     }
 
@@ -484,8 +492,14 @@ public partial class DetectionMinuteComponent
     {
         var pair = ModelColors.FirstOrDefault(p =>
             p.Key.Equals(model?.Trim(), StringComparison.OrdinalIgnoreCase));
+        if (pair.Key != null)
+        {
+            return pair.Value;
+        }
 
-        return pair.Key == null ? RegionColorPalette[0] : pair.Value;
+        return ModelColorRegistry.TryGetValue(model?.Trim() ?? string.Empty, out var registered)
+            ? registered
+            : ModelColorRegistry["OrcaHello"];
     }
 
     private string RegionsJson =>
