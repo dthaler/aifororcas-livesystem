@@ -92,8 +92,8 @@
         {
             get
             {
-                return Detections.FirstOrDefault(d => !string.IsNullOrEmpty(d.Found))?.Found
-    ?? string.Empty;
+                return Detections?.FirstOrDefault(d => !string.IsNullOrEmpty(d.Found))?.Found
+                    ?? string.Empty;
             }
             set
             {
@@ -112,8 +112,8 @@
         {
             get
             {
-                return Detections.FirstOrDefault(d => !string.IsNullOrEmpty(d.Comments))?.Comments
-?? string.Empty;
+                return Detections?.FirstOrDefault(d => !string.IsNullOrEmpty(d.Comments))?.Comments
+                    ?? string.Empty;
             }
             set
             {
@@ -200,6 +200,17 @@
             }
         }
         public string GlobalPredictionLabel => Detections?.FirstOrDefault()?.GlobalPredictionLabel;
+
+        // Every distinct label across the minute's detections, so a label from
+        // one model is not hidden by another model's empty label sorting first.
+        public List<string> GlobalPredictionLabels =>
+            Detections?
+                .Select(d => d?.GlobalPredictionLabel)
+                .Where(l => !string.IsNullOrWhiteSpace(l))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(l => l, StringComparer.OrdinalIgnoreCase)
+                .ToList()
+            ?? new List<string>();
 
         public static List<DetectionMinute> CreateDetectionMinutes(List<Detection> detections)
         {
