@@ -24,7 +24,7 @@ public partial class FalsePositives : IDisposable
     private List<DetectionMinute> detectionMinutes = null;
 
     private PaginationOptionsDTO paginationOptions =
-        new PaginationOptionsDTO() { RecordsPerPage = 5, Page = 1 };
+        new PaginationOptionsDTO() { RecordsPerPage = 0, MinutesPerPage = 5, Page = 1 };
 
     private ReviewedFilterOptionsDTO filterOptions =
         new ReviewedFilterOptionsDTO() { SortBy = "timestamp", SortOrder = "desc", Timeframe = "24h", Location = "all", HydrophoneId = "all" };
@@ -49,6 +49,7 @@ public partial class FalsePositives : IDisposable
         var paginatedResponse = await Service.GetFalseDetectionsAsync(paginationOptions, filterOptions);
 
         pagination.TotalNumberOfRecords = paginatedResponse.TotalNumberRecords;
+        pagination.TotalNumberOfMinutes = paginatedResponse.TotalNumberMinutes;
         pagination.TotalNumberOfPages = paginatedResponse.TotalAmountPages;
 
         if (pagination.TotalNumberOfPages > 0 && paginationOptions.Page > pagination.TotalNumberOfPages)
@@ -56,6 +57,7 @@ public partial class FalsePositives : IDisposable
             paginationOptions.Page = pagination.TotalNumberOfPages;
             paginatedResponse = await Service.GetFalseDetectionsAsync(paginationOptions, filterOptions);
             pagination.TotalNumberOfRecords = paginatedResponse.TotalNumberRecords;
+            pagination.TotalNumberOfMinutes = paginatedResponse.TotalNumberMinutes;
             pagination.TotalNumberOfPages = paginatedResponse.TotalAmountPages;
         }
 

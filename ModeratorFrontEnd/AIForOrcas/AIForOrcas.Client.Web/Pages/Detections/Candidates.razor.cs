@@ -24,7 +24,7 @@ public partial class Candidates : IDisposable
     private List<DetectionMinute> detectionMinutes = null;
 
     private PaginationOptionsDTO paginationOptions =
-        new PaginationOptionsDTO() { RecordsPerPage = 5, Page = 1 };
+        new PaginationOptionsDTO() { RecordsPerPage = 0, MinutesPerPage = 5, Page = 1 };
 
     private CandidateFilterOptionsDTO filterOptions =
         new CandidateFilterOptionsDTO() { SortBy = "timestamp", SortOrder = "desc", Timeframe = "6h", Location = "all", HydrophoneId = "all" };
@@ -62,6 +62,7 @@ public partial class Candidates : IDisposable
             paginationOptions.Page = pagination.TotalNumberOfPages;
             paginatedResponse = await Service.GetCandidateDetectionsAsync(paginationOptions, filterOptions);
             pagination.TotalNumberOfRecords = paginatedResponse.TotalNumberRecords;
+            pagination.TotalNumberOfMinutes = paginatedResponse.TotalNumberMinutes;
             pagination.TotalNumberOfPages = paginatedResponse.TotalAmountPages;
         }
         pagination.CurrentPage = paginationOptions.Page;
