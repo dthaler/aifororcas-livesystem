@@ -179,7 +179,7 @@ namespace AIForOrcas.Client.BL.Services
             catch (JsonException ex)
             {
                 _logger.LogError(ex, "Malformed JSON from API at {Url}", url);
-                return (default, httpResponseMessage);
+                return (default, null);
             }
         }
     }
