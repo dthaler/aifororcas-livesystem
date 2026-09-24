@@ -10,14 +10,12 @@ namespace AIForOrcas.Client.BL.Services
 {
     public class MetricsService : IMetricsService
     {
-        private readonly IHttpClientFactory _httpClientFactory;
         private readonly ILogger<MetricsService> _logger;
         private readonly IApiClientHelper _apiClientHelper;
         private string api = "api/metrics";
 
-        public MetricsService(IHttpClientFactory httpClientFactory, ILogger<MetricsService> logger, IApiClientHelper apiClientHelper)
+        public MetricsService(ILogger<MetricsService> logger, IApiClientHelper apiClientHelper)
         {
-            _httpClientFactory = httpClientFactory;
             _logger = logger;
             _apiClientHelper = apiClientHelper ?? throw new System.ArgumentNullException(nameof(apiClientHelper));
         }

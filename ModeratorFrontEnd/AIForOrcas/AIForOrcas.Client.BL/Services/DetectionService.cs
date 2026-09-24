@@ -17,8 +17,6 @@ namespace AIForOrcas.Client.BL.Services
     public class DetectionService : IDetectionService
     {
         private string api = "api/detections";
-        private JsonSerializerOptions defaultJsonSerializerOptions => new JsonSerializerOptions() { PropertyNameCaseInsensitive = true };
-        private readonly IHttpClientFactory _httpClientFactory;
         private readonly IAuthTokenProvider _authTokenProvider;
         private readonly ILogger<DetectionService> _logger;
         private readonly IApiClientHelper _apiClientHelper;
@@ -29,9 +27,8 @@ namespace AIForOrcas.Client.BL.Services
         /// </summary>
         private readonly DateTime _currentEpochStart = new DateTime(2025, 10, 12, 14, 23, 00, DateTimeKind.Utc);
 
-        public DetectionService(IHttpClientFactory httpClientFactory, IAuthTokenProvider authTokenProvider, ILogger<DetectionService> logger, IApiClientHelper apiClientHelper)
+        public DetectionService(IAuthTokenProvider authTokenProvider, ILogger<DetectionService> logger, IApiClientHelper apiClientHelper)
         {
-            _httpClientFactory = httpClientFactory;
             _authTokenProvider = authTokenProvider;
             _logger = logger;
             _apiClientHelper = apiClientHelper ?? throw new ArgumentNullException(nameof(apiClientHelper));
@@ -226,8 +223,6 @@ namespace AIForOrcas.Client.BL.Services
         public async Task UpdateRequestAsync(DetectionUpdate request)
         {
             var url = $"{api}/{request.Id}";
-            var dataJson = JsonSerializer.Serialize(request);
-            var stringContent = new StringContent(dataJson, Encoding.UTF8, "application/json");
 
             HttpResponseMessage httpResponseMessage;
             try
